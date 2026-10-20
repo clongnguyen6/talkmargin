@@ -34,6 +34,8 @@ let others = ["customer-call-notes.md", "team-offsite-agenda.md", "interview-scr
 
 // MARK: - Settings
 
+// The README is English: the overlay's own texts in English (the app decides this in main.swift, replaced here).
+UIText.language = .en
 let settings = Settings()
 settings.fontSize = 16
 settings.opacity = 0.85
