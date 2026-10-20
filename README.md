@@ -6,7 +6,7 @@ TalkMargin is a macOS menu-bar app. It shows your Markdown or Word (`.docx`) not
 
 It is for people who talk from prepared notes on calls: presenters, interviewers and interviewees, support and sales engineers, anyone doing a knowledge transfer.
 
-> **Language:** the app's interface is in Vietnamese. This README gives the English meaning of every menu item and control you need. Claude is told to explain in Vietnamese and to write the lines you might say in English (see [docs/claude.md](docs/claude.md)).
+> **Language:** the interface is in English and Vietnamese. Switch it with **Language** (**VI | EN**) in the display settings (the slider button in the overlay header); the change applies at once and is remembered. A new install starts in Vietnamese when macOS prefers Vietnamese over English, otherwise in English; an install that was already in use stays in Vietnamese. This README uses the English names. Claude's answers do not follow this setting: Claude is told to explain in Vietnamese and to write the lines you might say in English (see [docs/claude.md](docs/claude.md)).
 
 ![Compact overlay over a video call](docs/images/overlay-compact.png)
 
@@ -67,18 +67,18 @@ TalkMargin has a menu-bar icon and no Dock icon. On first launch it shows a help
 
 | Permission | What it is for | When it is asked |
 |---|---|---|
-| Accessibility | The right-Option shortcuts. A keyboard event tap reads key events to find right-Option combinations, and consumes only those. Nothing is logged or stored. | First launch. Until you grant it, the menu's first item is **Cấp quyền Accessibility để bật phím tắt…** ("Grant Accessibility to enable shortcuts"). Shortcuts start working within a second of the grant. |
+| Accessibility | The right-Option shortcuts. A keyboard event tap reads key events to find right-Option combinations, and consumes only those. Nothing is logged or stored. | First launch. Until you grant it, the menu's first item is **Grant Accessibility to enable shortcuts…**. Shortcuts start working within a second of the grant. |
 | Screen & System Audio Recording | Push-to-talk only: the meeting's sound (system audio). The capture API also requires a video stream, which is set to 2 × 2 pixels at 1 frame per second and never used. | The first time you hold `⌥ /` |
 | Microphone | Push-to-talk only: your voice. If you refuse, only the meeting audio is recognized. | The first time you hold `⌥ /` |
 
 The app never requests a separate Speech Recognition permission. Whether macOS asks for one on some setups is untested. Reading notes needs no permission; without Accessibility you can still scroll and click in the overlay.
 
-**Mở cùng macOS** ("Open with macOS") in the menu turns launch at login on or off. It is listed under System Settings → General → Login Items.
+**Open at login** in the menu turns launch at login on or off. It is listed under System Settings → General → Login Items.
 
 ## Quick start
 
-1. Click the menu-bar icon → **Mở file…** ("Open file…") and pick a `.md`, `.markdown`, `.txt` or `.docx` file. You can also run `open -a TalkMargin notes.md`, or use Open With in Finder. Try [examples/demo-meeting.md](examples/demo-meeting.md).
-2. Press right-Option + `P` (`⌥P`) to show or hide the overlay. Drag its header to move it, and drag an edge to resize it. **Đưa về sát webcam** ("Move next to the webcam") puts it at the top center of the screen that has the camera, so your eyes stay near the lens.
+1. Click the menu-bar icon → **Open file…** and pick a `.md`, `.markdown`, `.txt` or `.docx` file. You can also run `open -a TalkMargin notes.md`, or use Open With in Finder. Try [examples/demo-meeting.md](examples/demo-meeting.md).
+2. Press right-Option + `P` (`⌥P`) to show or hide the overlay. Drag its header to move it, and drag an edge to resize it. **Move next to webcam** puts it at the top center of the screen that has the camera, so your eyes stay near the lens.
 3. Scroll with `⌥↓` / `⌥↑`, jump between sections with `⌥]` / `⌥[` or `⌥1` … `⌥9`, and press `⌥E` for the expanded view.
 4. Edit the file in any editor. The overlay reloads on save. TalkMargin only reads your notes; it never writes to them.
 
@@ -91,8 +91,8 @@ Writing tips: one `##` heading per part of the talk, so the outline and the sect
 Click the file name in the header, or press `⌥D`. A list drops down inside the overlay:
 
 - **recent files** (`⌥1` … `⌥9` opens row N);
-- **Duyệt thư mục…** ("Browse folders…"): a folder browser drawn inside the overlay, safe while you share your screen;
-- **Hộp thoại mở file… (ngoài lúc share)** ("Open dialog… (not while sharing)"): the macOS open dialog. Its menus are drawn by macOS and are visible to screen sharing, so use it only when you are not sharing.
+- **Browse folders…**: a folder browser drawn inside the overlay, safe while you share your screen;
+- **Open dialog… (not while sharing)**: the macOS open dialog. Its menus are drawn by macOS and are visible to screen sharing, so use it only when you are not sharing.
 
 The overlay remembers the reading position of each file, and a separate position and size for the compact and expanded views. Opening a document while TalkMargin runs, from Finder, Open With, `open` or by dragging it onto the icon, sends it to the running overlay. Only one TalkMargin runs per user.
 
@@ -118,7 +118,7 @@ All shortcuts use the **right Option key** (`⌥` below). Left Option keeps work
 | Hold `⌥ /` | Push-to-talk: record the meeting audio and your microphone; release to review the text, then press Enter. Hold again to add more. |
 | In a list | `⌥↓` / `⌥↑` move, `⌥↩` choose, `⌥1` … `⌥9` choose row N; `⌥D`, `⌥S` or a click elsewhere closes it |
 
-**Display:** the slider button in the header, or the menu's **Tuỳ chỉnh hiển thị…** ("Display settings…"), opens live controls. **Nền** sets the backdrop darkness. **Làm mờ app phía sau** blurs the apps behind; turn it off to see through, for example to watch the screen you are sharing (combine with `⌥T`). **Nền sau chữ** draws a subtitle-style band behind the text. **Độ đậm chữ** sets text opacity and **Cỡ chữ** the font size. **Mặc định** resets the display settings.
+**Display:** the slider button in the header, or the menu's **Display settings…**, opens live controls. **Backdrop** sets the backdrop darkness. **Blur apps behind** blurs the apps behind; turn it off to see through, for example to watch the screen you are sharing (combine with `⌥T`). **Text band** draws a subtitle-style band behind the text. **Text opacity** sets text opacity and **Font size** the font size. **Language** switches the interface between Vietnamese (**VI**) and English (**EN**). **Defaults** resets the display settings; it leaves the language as it is.
 
 **Copy:** selecting text in the notes or the chat copies it as plain text at once, with no `⌘C` and no focus change.
 
@@ -133,11 +133,11 @@ Claude is optional. Everything above works without it. To use it:
 3. Ask with `⌥K`, or hold `⌥ /` to capture what was just said. The first question forks the session: your original session is never changed. Claude can only read and search files (Read, Grep, Glob). Answers stream into the column.
 4. The **Terminal** button copies a `cd … && claude --resume <fork>` command and brings Ghostty (or Terminal) forward, so you can continue the conversation there.
 
-Conversations are saved and the latest one is restored at launch. The menu's **Cuộc trò chuyện mới** starts a new conversation and **Cuộc trò chuyện trước** reopens an older one. What is sent, where it goes and what is stored: [docs/claude.md](docs/claude.md).
+Conversations are saved and the latest one is restored at launch. The menu's **New conversation** starts a new conversation and **Past conversations** reopens an older one. What is sent, where it goes and what is stored: [docs/claude.md](docs/claude.md).
 
 ## Upgrading
 
-Quit TalkMargin first (menu → **Thoát**, "Quit"). The installer refuses to run while any copy of the app is running, and changes nothing in that case.
+Quit TalkMargin first (menu → **Quit**). The installer refuses to run while any copy of the app is running, and changes nothing in that case.
 
 - **Release:** run `Install.command` from the new dmg, or `scripts/update.sh <file.dmg>`.
 - **Source:** `git pull`, then `./scripts/build-app.sh --install`.
@@ -146,7 +146,7 @@ Settings, conversations and reading positions stay as they are; they are keyed t
 
 ## Known limitations
 
-**Screen sharing.** The overlay sets `NSWindow.sharingType = .none`. Production builds always exclude it from capture. Dev and verification builds can opt in to being captured with `MP_ALLOW_CAPTURE=1`, for screenshots while testing; a red **ĐANG CHO CHỤP MÀN HÌNH** ("capture allowed") label in the header then shows it. What has been verified, and what has not:
+**Screen sharing.** The overlay sets `NSWindow.sharingType = .none`. Production builds always exclude it from capture. Dev and verification builds can opt in to being captured with `MP_ALLOW_CAPTURE=1`, for screenshots while testing; a red **CAPTURE ALLOWED** (**ĐANG CHO CHỤP MÀN HÌNH**) label in the header then shows it. What has been verified, and what has not:
 
 - Verified on macOS 26.6.2: the overlay is absent from ScreenCaptureKit captures and from the window list.
 - One user test with Microsoft Teams, as seen by a second account on the receiving end: the overlay was not visible, in both whole-screen and single-window sharing. Only the reading overlay was on screen; the pickers, the question box, the chat and the display settings were not tested by a receiver.
@@ -158,7 +158,7 @@ Settings, conversations and reading positions stay as they are; they are keyed t
 
 - Saving from Microsoft Word while a `.docx` is open was not tested; reload was tested with files replaced by a script.
 - Push-to-talk recognizes meeting audio as English, and your microphone as English and Vietnamese. It was not tested with real speech in Vietnamese. Without headphones, your microphone also picks up the meeting; that echo is dropped.
-- The interface is Vietnamese only.
+- The interface language setting covers TalkMargin's own text. Text drawn by macOS follows the macOS language instead: the open dialog, permission prompts, the menu's shortcut symbols and error details from the system. The microphone permission prompt shows TalkMargin's purpose in both languages.
 - Apple silicon and macOS 26 only. The app is not notarized.
 - One TalkMargin per user account.
 

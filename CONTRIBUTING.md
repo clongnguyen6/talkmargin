@@ -55,7 +55,7 @@ The settings domain and permission grants follow the id, so a fork with a new id
 
 ## Conventions
 
-- UI strings are Vietnamese; code, comments, commit messages and docs are English.
+- UI strings are in Vietnamese and English: add each one to both `PrompterCore/UIText+vi.swift` and `UIText+en.swift` and read it with `tr(.key)`. Keep English short so layouts hold. Text that reaches Claude goes in `ClaudeText` and is never translated. Code, comments, commit messages and docs are English.
 - No em dash in any text; use `-` or `·`.
 - Swift 6 strict concurrency: UI types are `@MainActor`; callbacks from AppKit and C use `MainActor.assumeIsolated`; audio-thread classes are `@unchecked Sendable` with a lock. Code that runs on another thread goes in a non-isolated type: a closure written inside a `@MainActor` type traps when called off the main thread.
 - Pure, testable logic goes in `PrompterCore` with Swift Testing tests.

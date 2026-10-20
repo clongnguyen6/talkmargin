@@ -23,7 +23,7 @@ claude -p --output-format stream-json --verbose --include-partial-messages \
 
 The question goes in on standard input. The answer streams back into the chat column.
 
-- **Fork, never the original.** The first question of a conversation resumes the session you linked with `--fork-session`. Claude Code then writes a new session (the fork) and leaves yours unchanged. Later questions resume the fork. The fork is named `🎙 Meeting · <title>` in `claude --resume`. **Cuộc trò chuyện mới** ("New conversation") makes the next question fork again.
+- **Fork, never the original.** The first question of a conversation resumes the session you linked with `--fork-session`. Claude Code then writes a new session (the fork) and leaves yours unchanged. Later questions resume the fork. The fork is named `🎙 Meeting · <title>` in `claude --resume`. **New conversation** makes the next question fork again.
 - **Read-only tools.** Only Read, Grep and Glob are available and pre-approved. There is no shell, no editing and no web access. TalkMargin adds no path limits of its own; Claude Code's permission settings decide what those tools may read.
 - **No MCP servers.** `--strict-mcp-config` is given without a config, so no MCP server is loaded.
 - **Your Claude Code configuration still applies** for that directory, for example `CLAUDE.md` files, settings and hooks. Hooks are commands you configured, and they run as they would in a terminal.
@@ -55,10 +55,10 @@ Nothing is sent until you press Enter. Push-to-talk text appears in the question
 | Forks | `~/.claude/projects/…`, written by Claude Code | Full fork transcripts, kept and managed by Claude Code. TalkMargin never deletes them. |
 | Terminal command | The clipboard, when you press **Terminal** | `cd '<folder>' && '<path to claude>' --resume <fork>` |
 
-To list sessions, TalkMargin reads the start and the end of the transcript files in `~/.claude/projects/*/*.jsonl` on your Mac. Its own forks are left out of the session picker. The menu's **Session Claude** submenu lists all sessions.
+To list sessions, TalkMargin reads the start and the end of the transcript files in `~/.claude/projects/*/*.jsonl` on your Mac. Its own forks are left out of the session picker. The menu's **Claude session** submenu lists all sessions.
 
 ## Limits
 
-- The language of answers is fixed: Vietnamese explanations, English lines to say. It is set by the prompt in `Sources/MeetingPrompter/ClaudeChat.swift`.
+- The language of answers is fixed: Vietnamese explanations, English lines to say. It is set by the prompt in `Sources/PrompterCore/ClaudeText.swift`. The interface language (**VI | EN**) changes none of what is sent: the prompt, the answer-language instruction, the fork name and the `Others:` / `Tôi:` labels stay the same.
 - One question runs at a time; others wait in a queue. You cannot change the session while a question is being answered.
 - Claude answers from the document that was on screen when you asked. Switching documents never changes the linked session or the conversation shown.

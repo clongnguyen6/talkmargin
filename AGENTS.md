@@ -12,7 +12,7 @@ Native macOS overlay (Swift 6, AppKit, TextKit 1) for reading meeting notes, wit
 
 ## Conventions
 
-- UI strings are Vietnamese; code, comments, commit messages and docs are English.
+- UI strings are in Vietnamese and English: add each one to both `PrompterCore/UIText+vi.swift` and `UIText+en.swift` and read it with `tr(.key)`. Keep English short so layouts hold. Text that reaches Claude goes in `ClaudeText` and is never translated. Code, comments, commit messages and docs are English.
 - Never use the em dash in any text; use `-` or `·`.
 - Swift 6 strict concurrency: UI types are `@MainActor`; callbacks from AppKit/C use `MainActor.assumeIsolated`; audio-thread classes are `@unchecked Sendable` with a lock.
 - Pure, testable logic goes in `PrompterCore` with Swift Testing tests.

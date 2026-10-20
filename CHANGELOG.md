@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The interface is available in English and Vietnamese: **Language** (**VI | EN**) in the display settings switches it at once, with no relaunch, and the choice is kept. A new install starts in Vietnamese when macOS prefers it, otherwise in English; an install already in use stays in Vietnamese. What is sent to Claude does not change with it.
+
 ## [0.1.0] - 2026-10-20
 
 First release.

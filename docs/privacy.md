@@ -4,7 +4,7 @@ TalkMargin reads your notes and shows them on your Mac. It makes no network requ
 
 ## Hidden from screen sharing, within limits
 
-Every window the app creates sets `NSWindow.sharingType = .none`, which asks macOS to leave it out of screen capture. Production builds always do this. Dev and verification builds can opt in to being captured with `MP_ALLOW_CAPTURE=1`, for screenshots while testing; the header then shows a red **ĐANG CHO CHỤP MÀN HÌNH** ("capture allowed") label. What the evidence covers:
+Every window the app creates sets `NSWindow.sharingType = .none`, which asks macOS to leave it out of screen capture. Production builds always do this. Dev and verification builds can opt in to being captured with `MP_ALLOW_CAPTURE=1`, for screenshots while testing; the header then shows a red **CAPTURE ALLOWED** (**ĐANG CHO CHỤP MÀN HÌNH**) label. What the evidence covers:
 
 | | Result |
 |---|---|
@@ -13,7 +13,7 @@ Every window the app creates sets `NSWindow.sharingType = .none`, which asks mac
 | Interaction states with a real receiver: pickers, question box, chat, display settings, open dialog | Not tested |
 | Legacy `CGDisplayStream` API | **Captures the overlay.** A sharing or recording app that uses it shows your notes. |
 | Menu-bar menu | A system window, visible to whole-screen sharing |
-| Menus inside the macOS open dialog (**Hộp thoại mở file…**) | Drawn by a macOS service, visible to whole-screen sharing. Use the folder browser inside the overlay while sharing. |
+| Menus inside the macOS open dialog (**Open dialog…**) | Drawn by a macOS service, visible to whole-screen sharing. Use the folder browser inside the overlay while sharing. |
 | Zoom, Google Meet, other apps; other macOS versions | Not tested |
 
 Before you rely on it, run a test call with a second device as the viewer.
@@ -47,7 +47,7 @@ Without headphones, your microphone also hears the meeting. Microphone text that
 
 The dev build uses `com.long.meetingprompter.dev` and `~/Library/Application Support/MeetingPrompter Dev/`.
 
-Your notes files are only read, never written. To remove everything: turn off **Mở cùng macOS** if it is on, quit the app, delete `~/Applications/TalkMargin.app`, the folder `~/Library/Application Support/MeetingPrompter/`, and the settings (`defaults delete com.long.meetingprompter`). Then remove TalkMargin from the Privacy & Security lists. Forks in `~/.claude/projects/` belong to Claude Code; delete them there if you want.
+Your notes files are only read, never written. To remove everything: turn off **Open at login** if it is on, quit the app, delete `~/Applications/TalkMargin.app`, the folder `~/Library/Application Support/MeetingPrompter/`, and the settings (`defaults delete com.long.meetingprompter`). Then remove TalkMargin from the Privacy & Security lists. Forks in `~/.claude/projects/` belong to Claude Code; delete them there if you want.
 
 ## Reporting a security issue
 

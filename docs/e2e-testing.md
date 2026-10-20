@@ -9,7 +9,7 @@ Unit tests (`swift test`) cover `PrompterCore`. The overlay, shortcuts, audio an
    - Only one TalkMargin runs per user: quit the installed app first, or the dev build exits.
    - It claims no document types. Documents opened from Finder go to the installed app; open test documents from the overlay's picker instead.
    - It needs its own Accessibility grant, and Microphone and Screen & System Audio Recording for push-to-talk, the first time.
-2. To take screenshots of the overlay, run it capturable: `MP_ALLOW_CAPTURE=1 "build/TalkMargin Dev.app/Contents/MacOS/TalkMargin" &`. The header then shows a red **ĐANG CHO CHỤP MÀN HÌNH** ("capture allowed") label, because that instance is visible to screen sharing. Quit it by its pid when you are done (`pkill -x TalkMargin` would also match the installed app).
+2. To take screenshots of the overlay, run it capturable: `MP_ALLOW_CAPTURE=1 "build/TalkMargin Dev.app/Contents/MacOS/TalkMargin" &`. The header then shows a red **CAPTURE ALLOWED** (**ĐANG CHO CHỤP MÀN HÌNH**) label, because that instance is visible to screen sharing. Quit it by its pid when you are done (`pkill -x TalkMargin` would also match the installed app).
 3. Save what a test may change, and restore it afterwards:
    - `defaults export com.long.meetingprompter.dev <scratch>/prefs.plist` (restore with `defaults import`);
    - `pbpaste > <scratch>/clip` (restore with `pbcopy < <scratch>/clip`).
