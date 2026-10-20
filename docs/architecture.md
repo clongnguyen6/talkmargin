@@ -52,7 +52,7 @@ The pickers, outline and chat are views inside the overlay and create no windows
 ## Input
 
 - **`RightOptionKeys`**: a CGEvent tap (needs Accessibility) that matches right-Option shortcuts by device bits and swallows them, including their key-ups and auto-repeats. The tap runs on its own thread and decides from a snapshot of the app state (overlay visible, picker open) published before the main run loop sleeps; actions run afterwards on the main thread as run loop blocks, re-checking their condition. While presses are queued, conditional shortcuts are swallowed rather than leaked. A disabled tap re-enables itself (and a 2 s watchdog checks), releasing held keys.
-- **`AppDelegate`**: registers the shortcuts, builds the menu bar menu, and wires the overlay, chat and push-to-talk together.
+- **`AppDelegate`**: registers the shortcuts, builds the menu bar menu, and wires the overlay, chat and push-to-talk together. A reopen (the app opened again from Finder or Spotlight) shows the overlay, the way in when macOS hides the menu bar icon beside the notch.
 - **`FileWatcher`**: reloads the notes on save, including editors that save atomically.
 
 ## Push-to-talk

@@ -65,6 +65,8 @@ swift test                         # unit tests
 
 TalkMargin has a menu-bar icon and no Dock icon. On first launch it shows a help page in the overlay and asks for Accessibility.
 
+On a notched display macOS may hide the menu-bar icon when the menu bar is full. Press `⌥P`, or open TalkMargin again from Finder or Spotlight, to show the overlay.
+
 | Permission | What it is for | When it is asked |
 |---|---|---|
 | Accessibility | The right-Option shortcuts. A keyboard event tap reads key events to find right-Option combinations, and consumes only those. Nothing is logged or stored. | First launch. Until you grant it, the menu's first item is **Grant Accessibility to enable shortcuts…**. Shortcuts start working within a second of the grant. |
@@ -78,7 +80,7 @@ The app never requests a separate Speech Recognition permission. Whether macOS a
 ## Quick start
 
 1. Click the menu-bar icon → **Open file…** and pick a `.md`, `.markdown`, `.txt` or `.docx` file. You can also run `open -a TalkMargin notes.md`, or use Open With in Finder. Try [examples/demo-meeting.md](examples/demo-meeting.md).
-2. Press right-Option + `P` (`⌥P`) to show or hide the overlay. Drag its header to move it, and drag an edge to resize it. **Move next to webcam** puts it at the top center of the screen that has the camera, so your eyes stay near the lens.
+2. Press right-Option + `P` (`⌥P`) to show or hide the overlay, or open TalkMargin again from Finder or Spotlight to show it. Drag its header to move it, and drag an edge to resize it. **Move next to webcam** puts it at the top center of the screen that has the camera, so your eyes stay near the lens.
 3. Scroll with `⌥↓` / `⌥↑`, jump between sections with `⌥]` / `⌥[` or `⌥1` … `⌥9`, and press `⌥E` for the expanded view.
 4. Edit the file in any editor. The overlay reloads on save. TalkMargin only reads your notes; it never writes to them.
 

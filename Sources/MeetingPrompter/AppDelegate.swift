@@ -99,6 +99,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         overlay.show()
     }
 
+    /// Opening the app again from Finder or Spotlight while it runs (macOS may hide the menu bar icon
+    /// beside the notch): shows the overlay on a visible screen. Never hides it or takes the keyboard.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        log.info("Reopen: showing the overlay")
+        present()
+        return false
+    }
+
     func application(_ application: NSApplication, open urls: [URL]) {
         guard let url = urls.last else { return }
         openNotes(url)

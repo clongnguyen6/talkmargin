@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Opening TalkMargin again from Finder or Spotlight while it runs shows the overlay. Before, it did nothing, which left `⌥P` as the only way in when macOS hid the menu bar icon beside the notch.
+
 ## [0.2.0] - 2026-10-20
 
 - The interface is available in English and Vietnamese: **Language** (**VI | EN**) in the display settings switches it at once, with no relaunch, and the choice is kept. A new install starts in Vietnamese when macOS prefers it, otherwise in English; an install already in use stays in Vietnamese. What is sent to Claude does not change with it.
