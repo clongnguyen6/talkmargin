@@ -1,0 +1,72 @@
+# Architecture
+
+Swift package with two targets: `PrompterCore` (pure logic, unit tested) and `MeetingPrompter` (the AppKit app). The app, **TalkMargin**, is an accessory app (menu bar icon, no Dock icon) built into `TalkMargin.app` (executable `TalkMargin`, icon `AppIcon.icns`, menu bar glyph `MenuBarIconTemplate`) by `scripts/build-app.sh`. Bundle ids, settings domain, data folder and lock use the `meetingprompter` names.
+
+## One instance
+
+`main.swift` takes **`PrompterCore/InstanceLock`** (an exclusive `flock` on `~/Library/Application Support/MeetingPrompter/instance.lock`, shared by every build, from the account's real home) before anything else exists. The holder writes its pid there and keeps the lock for its lifetime; the system drops it when the process ends. Any launch that cannot simply start runs **`LaunchCoordinator`** instead of `AppDelegate` (no settings, window, status item or tap until it is sure):
+- Lock held by another process: `InstanceGate` decides. A production launch hands its documents to the running production copy at that copy's bundle path (`NSWorkspace.open(_:withApplicationAt:)`, so LaunchServices delivers them to that process) and exits. Only the holder's own pid answering counts; a copy LaunchServices had to start instead is marked `--mp-forwarded-launch` and never forwards again. If the lock comes free it becomes the instance; otherwise (other build, retries, 15 s deadline) the documents go first into the recent files. Dev and unbundled builds never forward.
+- Lock taken, but an instance of the same family runs without it (**`LegacyInstances`**): only a build from before the lock counts (no `MPGitCommit` stamp, or the old executable name `MeetingPrompter`); a current build's own second launch never does, however long it lives. If one is still alive a second later (`kill(pid, 0)`; the workspace lists an instance that just quit for a moment): start nothing, release the lock, a notice asks to quit it, documents first in the recent files, including any that arrive meanwhile.
+- A launch that is not the instance gives up at 15 s and stops at 17 s, counted from its process's launch (**`SecondLaunchLifetime`**), unless it became the instance. Refusals (another build or a dev build runs) are shown, not only logged. Notices are a **`NoticePanel`**: non-activating (the meeting app keeps the keyboard), not modal (the launch's common-mode timers keep running), excluded from capture.
+- While running, `AppDelegate` observes the running apps: a legacy build of the same family still alive after a second launch's lifetime is shown in the overlay header (invisible to screen sharing).
+- Lock unusable (only `EWOULDBLOCK` means held; an unwritable lock file is locked read-only): a notice and the log say why; it starts unless another instance runs. Builds are told apart by **`AppIdentity`** (bundle id): settings domain and data folder (`MeetingPrompter`, `MeetingPrompter Dev`) follow it.
+
+`scripts/build-app.sh` stamps every bundle (`CFBundleShortVersionString` from `VERSION`, `CFBundleVersion` from `BUILD_NUMBER`, `MPGitCommit` with `-dirty`) and signs last. It makes the dev bundle (`com.long.meetingprompter.dev`, no `CFBundleDocumentTypes`, put in place with one `renamex_np(RENAME_SWAP)`, `scripts/swap-into-place.swift`, refused while it runs), a stage-only bundle (`--out`), or, with `--install`, stages the production bundle and calls **`scripts/update.sh --app`**, the one install routine (refuses while any copy runs; retires old-name and other copies after verifying the new one). Then **`scripts/registrations.sh stale`** removes LaunchServices records of deleted copies, which `lsregister -u` cannot (placeholder bundle, unregister, delete). Staging copies are unregistered before they are deleted. Both scripts have a fail-closed sandbox mode (`MP_UPDATE_SANDBOX`).
+
+## Window
+
+- **`OverlayPanel`**: a non-activating `NSPanel` at `.statusBar` level that joins all Spaces and full-screen apps, with `sharingType = .none` so screen capture skips it. It never becomes key, except while the question box is in use (`acceptsKeyboard`). It handles header double-click itself, independent of the system title bar preference.
+- **`OverlayController`**: builds and owns everything inside the panel. Header: buttons left, the file name centered when there is room, and a stack of back button, capture label and progress on the right (hidden ones take no space). No constraint inside the panel outranks the window's own size, so the saved frames hold. Layout, left to right: `OutlineSidebar` (resizable via `SidebarResizeHandle`), then an `NSSplitView` of the notes `MarkdownPane` and the chat column (a `MarkdownPane` plus `ChatInputView`). It also manages compact vs expanded frames (remembered separately in `Settings`), the jump history button, and applies the display settings (`applyAppearance`: blur view, dark backdrop, `TextAppearance`).
+- **`OverlayPicker`** (a `DropdownBox`): a drop-down list drawn inside the panel (not a separate window), opaque over any backdrop, used for the document picker under the file name (recent files, and a folder browser built from `PrompterCore/FolderListing`) and the Claude session picker under the chat title. The display settings use a `DropdownBox` too. Rows take the first click without the window becoming key; `OverlayController` routes right-⌥ arrows, Return and digits to it while it is open and closes it on any click elsewhere in the panel. Navigation logic is `PrompterCore/PickerList`; folder labels are `PrompterCore/PathLabel`.
+- **`OpenNotesDialog`** runs the system open panel for the types in `NotesLoader.supportedExtensions`: excluded from capture, above the overlay, and it hands focus back to the app that had it. `Settings.openableRecentFiles` is the one recents list (existing, supported type) behind the picker and the menu.
+- **`DisplaySettingsController`**: the live display controls, shown in a dropdown inside the panel. **`HeaderTitle`** layers each header label's title, hover hint and timed notice so none overwrites another.
+
+### Windows the app creates
+
+Everything the user sees must stay out of screen sharing. Verified with ScreenCaptureKit and the window list (macOS 26.6.2); the legacy `CGDisplayStream` API still captures the overlay, and on the Teams receiver side only the reading overlay was observed, hidden in both share modes (see [privacy.md](privacy.md)). `OverlayPanel.captureSharingType` is `.none` (or `.readOnly` with `MP_ALLOW_CAPTURE=1`, which only dev and verification builds honour) and is applied to every window the app makes:
+
+| Window | Created by | Capture exclusion |
+|---|---|---|
+| The overlay (`OverlayPanel`) | always | `sharingType` set in `init` |
+| Open dialog (`NSOpenPanel`) | "Hộp thoại mở file…" / menu | started by `OpenNotesDialog.present` from a timer, never inside a shortcut's run loop block; set before `runModal`; a non-activating panel, so it takes the keyboard while the meeting app stays frontmost (activation is requested too, but macOS refuses it outside a click or menu event, e.g. for a shortcut), and the keyboard returns to the previous app when it closes. `runModal` forces the dialog to level 8, so the overlay is lowered to `.floating` while the dialog is up. Its popup and context menus belong to the Open and Save Panel Service and are captured: for use outside a share only; the folder browser in the picker is the in-share path |
+| Menu bar menu (`NSMenu`) | status item | system window, part of the menu bar |
+| Launch notice (`NoticePanel`) | `LaunchCoordinator`, for a launch that does not start (another copy runs, the lock is unusable); closes on OK or after 60 s | `sharingType` set in `init` (`OverlayPanel.captureSharingType`); non-activating, not modal, `.floating` level |
+
+The pickers, outline and chat are views inside the overlay and create no windows. The overlay uses no AppKit tooltips (they are windows the app cannot exclude); `HoverHint` shows a control's hint in the file name or chat title while the pointer rests on it. The text views (notes, chat, question box) have no context menu and ignore force-click Look Up, since those menus and panels come from other processes. In a dev or verification build started with `MP_ALLOW_CAPTURE=1` the header shows a red "ĐANG CHO CHỤP MÀN HÌNH" label so a capturable instance is never mistaken for a protected one.
+
+## Text
+
+- **`PrompterCore/NotesLoader`** is the one entry point for notes files (`NotesLoader.supportedExtensions`: md, markdown, txt, docx): it returns the markdown the overlay renders and Claude receives. Markdown is read as is; `.docx` goes through **`DocxToMarkdown`** (a small zip reader over the Compression framework plus `XMLParser`), which keeps headings (paragraph styles with outline levels or "heading N"/"Title" names; when a document has no styled headings, short all-bold paragraphs larger than the body text), lists (`numbering.xml`, or literal bullet characters), bold/italic/strikethrough, quotes and tables, and escapes markdown syntax that appears in Word text. Errors are `NotesLoadError`, with a Vietnamese description ready for the overlay.
+- **`PrompterCore/MarkdownRenderer`** turns markdown into an `NSAttributedString` (headings, lists, checkboxes, quotes as one-column text tables, tables, rules, fenced code, inline emphasis) and reports headings with their locations and levels.
+- **`MarkdownPane`** shows rendered markdown in a TextKit 1 `NSTextView`: line-aligned stepping, hold-to-scroll, heading and section jumps with back/forward history, a reading anchor that survives reflow on resize, a sticky "pinned heading" for the chat, and copy-on-select (`CopyOnSelectTextView`, `SelectionLayoutManager`).
+- **`FadingScrollView`** masks the top edge hard at the line boundary and fades the bottom.
+- **`PrompterCore/Sections`** decides which headings are "sections" for `⌥1…9`.
+
+## Input
+
+- **`RightOptionKeys`**: a CGEvent tap (needs Accessibility) that matches right-Option shortcuts by device bits and swallows them, including their key-ups and auto-repeats. The tap runs on its own thread and decides from a snapshot of the app state (overlay visible, picker open) published before the main run loop sleeps; actions run afterwards on the main thread as run loop blocks, re-checking their condition. While presses are queued, conditional shortcuts are swallowed rather than leaked. A disabled tap re-enables itself (and a 2 s watchdog checks), releasing held keys.
+- **`AppDelegate`**: registers the shortcuts, builds the menu bar menu, and wires the overlay, chat and push-to-talk together.
+- **`FileWatcher`**: reloads the notes on save, including editors that save atomically.
+
+## Push-to-talk
+
+- **`AudioCapture`**: one ScreenCaptureKit stream for system audio and the microphone, running only while held; **`AudioRouter`** / **`ClipSink`** feed buffers to the recognizers and buffer them until the recognizers are ready.
+- **`SpeechPipeline`**: wraps `SpeechAnalyzer` with `SpeechTranscriber` (English) or `DictationTranscriber` (Vietnamese), converting audio formats and reporting text with confidence.
+- **`ClipTranscriber`** (in `Transcribers.swift`): recognizes meeting audio as English and the microphone as both languages, keeps the more confident, and drops microphone text that echoes the meeting (`PrompterCore/EchoFilter`).
+
+## Claude
+
+- **`ClaudeSessionCatalog`** reads `~/.claude/projects/*/*.jsonl` (head for the working directory, tail for the latest title) to list recent sessions by project: all of them for the menu, and without the app's own meeting forks (`🎙 Meeting · ` name, or a fork id saved in a conversation) for the session picker, skipped before the per-project limit. Picker rows show a short session id.
+- **`ClaudeRunner`** runs one `claude -p --output-format stream-json` turn with a restricted tool set (`--tools Read,Grep,Glob`, `--strict-mcp-config`) and streams text, tool use and the session id back on the main actor. It takes `PATH` from the login shell so it works when launched from Finder.
+- **`ClaudeChat`** holds the conversation: the first question forks the linked session (`--resume --fork-session --name "🎙 Meeting · …"`), later ones resume the fork. Each question carries what the fork lacks of the notes on screen when it was asked (see `NotesDelivery`); it renders turns as markdown (naming the document when it changes) and pins the newest turn. Switching documents never changes the linked session or the conversation shown.
+- **`PrompterCore/NotesDelivery`** decides, per question, from the conversation's saved `NotesContext` (document Claude was last told is on screen, plus the latest version of each document it has): nothing; the full document (first time, new document, big edit, up to 60k characters with a truncation note); a line diff of edits (`NotesDiff`); or a short "switched back, unchanged" notice. The context is committed only after a successful turn, and cleared when Claude Code reports a compaction (`compact_boundary`), so the next question resends. Conversations saved without a context get the full notes once, labelled as the notes on screen now.
+- **`ConversationStore`** saves conversations to `~/Library/Application Support/MeetingPrompter/conversations.json` (dev build: `MeetingPrompter Dev/`; newest first, at most 50).
+- **`TerminalLauncher`** copies the resume command and brings Ghostty or Terminal forward.
+
+## Persistence
+
+`Settings` wraps `UserDefaults` (`com.long.meetingprompter`): font size, display settings, frames per mode, outline width, chat ratio, linked session, recent files and per-file scroll offsets.
+
+File keys are **`PrompterCore/NotesPath.canonical`** (standardized, the folder's symlinks resolved on the existing part, the file's own name kept, `/private/{tmp,var,etc}` written without `/private`). `OverlayController.open` canonicalizes every URL. At launch, without touching the disk, `Settings` merges saved recents, last file and offsets by `NotesPath.lexical` (the canonical spelling's offset wins) and `ConversationStore` rewrites saved document paths the same way; opening a file merges same-named recents that resolve to it (symlinked folders), keeping their offset.
+
+`ConversationStore` loads through **`PrompterCore/StoreFile`**: an unreadable `conversations.json` is moved aside (`conversations.unreadable-<date>.json`) before starting empty; if it cannot be moved, nothing is saved that launch.

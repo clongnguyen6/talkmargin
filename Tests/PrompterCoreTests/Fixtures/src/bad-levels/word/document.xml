@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Real heading</w:t></w:r></w:p>
+<w:p><w:pPr><w:outlineLvl w:val="-5"/></w:pPr><w:r><w:t>Negative outline level</w:t></w:r></w:p>
+<w:p><w:pPr><w:outlineLvl w:val="12"/></w:pPr><w:r><w:t>Outline level twelve</w:t></w:r></w:p>
+<w:p><w:pPr><w:outlineLvl w:val="99999999999999999999"/></w:pPr><w:r><w:t>Outline level overflow</w:t></w:r></w:p>
+<w:p><w:pPr><w:outlineLvl w:val="x"/></w:pPr><w:r><w:t>Outline level text</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="NegativeStyle"/></w:pPr><w:r><w:t>Negative style</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="HugeHeading"/></w:pPr><w:r><w:t>Huge heading name</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="MinusHeading"/></w:pPr><w:r><w:t>Minus heading name</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="-1"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>negative list level</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="99"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>list level ninety-nine</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="1"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>huge start</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr></w:pPr><w:r><w:t>overflowing override</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="BadList"/></w:pPr><w:r><w:t>styled bad list</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:sz w:val="-40"/><w:b/></w:rPr><w:t>negative size</w:t></w:r><w:r><w:rPr><w:sz w:val="abc"/></w:rPr><w:t> text size</w:t></w:r></w:p>
+<w:p><w:pPr><w:numPr><w:ilvl w:val="0"/><w:numId w:val="-3"/></w:numPr></w:pPr><w:r><w:t>negative num id</w:t></w:r></w:p>
+</w:body></w:document>

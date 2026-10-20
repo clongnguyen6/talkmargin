@@ -1,0 +1,31 @@
+{
+  "tool": "Built-in image_gen.imagegen; the tool did not expose a model name",
+  "generator_per_embedded_c2pa_manifest": {
+    "source": "C2PA manifest embedded in each concept's generated-source.png (caBX chunk), same fields in both; read, signature not validated. The published tree keeps only soft-reply/generated-source.png.",
+    "claim_generator_info.name": "OpenAI Media Service API",
+    "claim_generator_info.specVersion": "2.2.0",
+    "claim_generator_info.org.contentauth.c2pa_rs": "0.79.2",
+    "c2pa.actions.v2": [
+      {
+        "action": "c2pa.created",
+        "softwareAgent": {
+          "name": "ChatGPT",
+          "version": "gpt-image"
+        },
+        "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"
+      },
+      {
+        "action": "c2pa.converted"
+      },
+      {
+        "action": "c2pa.watermarked.unbound"
+      }
+    ]
+  },
+  "note": "The app was named Meeting Prompter when these prompts were written.",
+  "transparent_background": true,
+  "concepts": {
+    "quiet-cue": "Use case: logo-brand. Generate one actual macOS application icon for Meeting Prompter, a private personal meeting teleprompter. Concept 01: Quiet Cue. A single bold warm ivory reading pane with two thick horizontal script bars and a small right-pointing cue triangle aligned to the lower bar, on a deep muted teal rounded-square app tile. Calm, focused, private. Sculpted satin enamel, gentle depth and restrained soft highlights, premium native macOS icon craft. Straight-on orthographic, centered symmetrical layout, no perspective. Very simple large silhouette, generous negative space, only two script bars, legible at 16 pixels. Canvas 1024x1024 PNG. Tile occupies about 84% of canvas with macOS rounded corners, transparent outside tile and subtle shadow. No letters, words, numbers, watermark, badges, microphone, eyes, locks, sparkle or extra decoration. Render the finished icon alone, no contact sheet or mockup.",
+    "soft-reply": "Use case: logo-brand. Generate one actual macOS application icon for Meeting Prompter, a private personal meeting teleprompter. Concept 02: Soft Reply. One large simple warm ivory speech bubble with a short lower-left tail and two bold horizontal indigo reading lines inside, on a muted periwinkle-indigo rounded-square tile. The bubble represents prepared speech and quiet question support. Calm, focused and personal. Native macOS icon craft, softly sculpted ceramic, subtle dimensional edge and gentle ambient shadow, restrained matte material. Straight-on orthographic, centered bold silhouette, generous negative space. Large shapes must remain legible at 16 pixels. Canvas 1024x1024 PNG, macOS rounded-square tile about 84 percent of the canvas, transparent outside tile, subtle shadow. Finished single icon only, no mockup or sheet. No text, letters, numbers, watermark, badge, microphone, eyes, locks, sparkle or extra decoration."
+  }
+}

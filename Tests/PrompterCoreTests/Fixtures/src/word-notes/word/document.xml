@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" mc:Ignorable="w14 w15"><w:body>
+<w:p w:rsidR="00A1" w:rsidRDefault="00A1"><w:pPr><w:pStyle w:val="Title"/></w:pPr><w:r><w:t>Meeting notes</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Subtitle"/></w:pPr><w:r><w:t>Knowledge transfer, week 3</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="TOCHeading"/></w:pPr><w:r><w:t>Contents</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:bookmarkStart w:id="0" w:name="_Toc1"/><w:r><w:t>Opening</w:t></w:r><w:bookmarkEnd w:id="0"/></w:p>
+<w:p><w:r><w:t xml:space="preserve">Hello </w:t></w:r><w:r><w:rPr><w:b/><w:bCs/></w:rPr><w:t>bold</w:t></w:r><w:r><w:t xml:space="preserve"> and </w:t></w:r><w:r><w:rPr><w:i/><w:iCs/></w:rPr><w:t>italic</w:t></w:r><w:r><w:t xml:space="preserve"> and </w:t></w:r><w:r><w:rPr><w:strike/></w:rPr><w:t>gone</w:t></w:r><w:r><w:t xml:space="preserve"> text, </w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t>spl</w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t>it</w:t></w:r><w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve"> bold </w:t></w:r><w:r><w:t xml:space="preserve">then </w:t></w:r><w:r><w:rPr><w:rStyle w:val="Strong"/></w:rPr><w:t>strong</w:t></w:r><w:r><w:t xml:space="preserve"> and </w:t></w:r><w:r><w:rPr><w:rStyle w:val="Strong"/><w:b w:val="0"/></w:rPr><w:t>unbold</w:t></w:r><w:r><w:t>.</w:t></w:r></w:p>
+<w:p><w:r><w:t>Line one</w:t></w:r><w:r><w:br/><w:t>Line two</w:t></w:r><w:r><w:tab/><w:t>after tab</w:t></w:r><w:r><w:rPr><w:vanish/></w:rPr><w:t>hidden</w:t></w:r></w:p>
+<w:p/>
+<w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Agenda</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>first</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>second</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="1"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>second point one</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr><w:r><w:t>third</w:t></w:r></w:p>
+<w:p><w:r><w:t>Steps:</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr></w:pPr><w:r><w:t>one</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr></w:pPr><w:r><w:t>two</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="1"/><w:numId w:val="2"/></w:numPr></w:pPr><w:r><w:t>two a</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="1"/><w:numId w:val="2"/></w:numPr></w:pPr><w:r><w:t>two b</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr></w:pPr><w:r><w:t>three</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="4"/></w:numPr></w:pPr><w:r><w:t>restart at five</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="ListBullet"/></w:pPr><w:r><w:t>styled bullet</w:t></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Section"/></w:pPr><w:r><w:t>Custom section</w:t></w:r></w:p>
+<w:p><w:pPr><w:outlineLvl w:val="2"/></w:pPr><w:r><w:rPr><w:b/></w:rPr><w:t>Direct level three</w:t></w:r></w:p>
+<w:sdt><w:sdtPr><w:id w:val="1"/></w:sdtPr><w:sdtContent><w:p><w:pPr><w:pStyle w:val="Heading2"/></w:pPr><w:r><w:t>Inside a content control</w:t></w:r></w:p></w:sdtContent></w:sdt>
+<w:p><w:r><w:t xml:space="preserve">See </w:t></w:r><w:hyperlink r:id="rId3" w:history="1"><w:r><w:rPr><w:rStyle w:val="Hyperlink"/></w:rPr><w:t>the plan</w:t></w:r></w:hyperlink><w:r><w:t xml:space="preserve"> and </w:t></w:r><w:ins w:id="2" w:author="A" w:date="2026-10-18T00:00:00Z"><w:r><w:t>inserted</w:t></w:r></w:ins><w:del w:id="3" w:author="A" w:date="2026-10-18T00:00:00Z"><w:r><w:delText>deleted</w:delText></w:r></w:del><w:r><w:t>.</w:t></w:r></w:p>
+<w:p><w:r><w:br w:type="page"/></w:r></w:p>
+<w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Risks</w:t></w:r></w:p>
+<w:tbl><w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="0" w:type="auto"/><w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/></w:tblPr><w:tblGrid><w:gridCol w:w="3116"/><w:gridCol w:w="3117"/><w:gridCol w:w="3117"/></w:tblGrid>
+<w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc><w:tcPr><w:tcW w:w="3116" w:type="dxa"/></w:tcPr><w:p><w:r><w:t>Risk</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3117" w:type="dxa"/></w:tcPr><w:p><w:r><w:t>Owner</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3117" w:type="dxa"/></w:tcPr><w:p><w:r><w:t>Note</w:t></w:r></w:p></w:tc></w:tr>
+<w:tr><w:tc><w:tcPr><w:tcW w:w="3116" w:type="dxa"/></w:tcPr><w:p><w:r><w:t>Latency</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3117" w:type="dxa"/></w:tcPr><w:p><w:r><w:t>An</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3117" w:type="dxa"/></w:tcPr><w:p><w:r><w:rPr><w:b/></w:rPr><w:t>High</w:t></w:r><w:r><w:t xml:space="preserve"> a | b</w:t></w:r></w:p></w:tc></w:tr>
+<w:tr><w:tc><w:tcPr><w:tcW w:w="3116" w:type="dxa"/></w:tcPr><w:p><w:pPr><w:pStyle w:val="Heading3"/></w:pPr><w:r><w:t>Cell heading</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3117" w:type="dxa"/></w:tcPr><w:p><w:r><w:t>p1</w:t></w:r></w:p><w:p><w:r><w:t>p2</w:t></w:r></w:p></w:tc><w:tc><w:tcPr><w:tcW w:w="3117" w:type="dxa"/></w:tcPr><w:p/></w:tc></w:tr>
+</w:tbl>
+<w:p><w:pPr><w:pStyle w:val="Quote"/></w:pPr><w:r><w:t>Say this slowly.</w:t></w:r></w:p>
+<w:p><w:r><w:t># not a heading</w:t></w:r></w:p>
+<w:p><w:r><w:t>1. not a list</w:t></w:r></w:p>
+<w:p><w:r><w:t>- not a bullet</w:t></w:r></w:p>
+<w:p><w:r><w:t>*stars* and a_b and _under_ and R&amp;D and &amp;amp; and [x](y)</w:t></w:r></w:p>
+<w:p><w:r><w:rPr><w:sz w:val="28"/><w:b/></w:rPr><w:t>Big bold but styled headings exist</w:t></w:r></w:p>
+<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="720" w:footer="720" w:gutter="0"/><w:cols w:space="720"/></w:sectPr></w:body></w:document>
