@@ -304,6 +304,9 @@ final class MarkdownPane: NSObject {
 
     /// Keeps the last heading with this exact text at the top, also after later
     /// resizes, until the reader scrolls by hand. Nil releases the pin.
+    /// A heading is kept at the top (`pin(toHeading:)`) and the reader has not scrolled away by hand.
+    var isPinned: Bool { pinnedHeading != nil }
+
     func pin(toHeading text: String?) {
         pinnedHeading = text
         applyPin()

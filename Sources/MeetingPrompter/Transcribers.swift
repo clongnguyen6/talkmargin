@@ -37,8 +37,23 @@ final class ClipTranscriber {
     /// Live text while recording.
     var onPreview: ((String) -> Void)?
     private(set) var isRecording = false
-    /// Set when Vietnamese is not available yet (e.g. still downloading).
-    private(set) var notice: String?
+    /// What went wrong or is pending, e.g. Vietnamese still downloading; translated when read.
+    private enum Notice {
+        case noAudio(Error)
+        case setupFailed(Error)
+        case vietnameseDownloading
+    }
+
+    private var noticeState: Notice?
+    /// The notice in the current interface language (errors from the system keep the system's language).
+    var notice: String? {
+        switch noticeState {
+        case .noAudio(let error): tr(.recordingNoAudio, error.localizedDescription)
+        case .setupFailed(let error): error.localizedDescription
+        case .vietnameseDownloading: tr(.recordingVietnameseDownloading)
+        case nil: nil
+        }
+    }
 
     private let capture: AudioCapture
     private let log = Logger(subsystem: "MeetingPrompter", category: "clip")
@@ -55,7 +70,7 @@ final class ClipTranscriber {
         guard !isRecording else { return }
         isRecording = true
         tracks = [:]
-        notice = nil
+        noticeState = nil
         let sink = ClipSink()
         capture.router.setClip(sink)
         onPreview?("")
@@ -63,7 +78,7 @@ final class ClipTranscriber {
             do {
                 try await capture.acquire()
             } catch {
-                notice = tr(.recordingNoAudio, error.localizedDescription)
+                noticeState = .noAudio(error)
                 onPreview?("")
                 return false
             }
@@ -82,7 +97,7 @@ final class ClipTranscriber {
                 pipelines = system + microphone
                 sink.attach(system: system, microphone: microphone)
             } catch {
-                notice = error.localizedDescription
+                noticeState = .setupFailed(error)
                 log.error("clip setup failed: \(error.localizedDescription)")
             }
             return true
@@ -123,7 +138,7 @@ final class ClipTranscriber {
 
     private func downloadVietnamese() {
         guard vietnameseDownload == nil else { return }
-        notice = tr(.recordingVietnameseDownloading)
+        noticeState = .vietnameseDownloading
         vietnameseDownload = Task {
             do {
                 try await SpeechPipeline.install(.vietnamese)

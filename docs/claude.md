@@ -50,7 +50,7 @@ Nothing is sent until you press Enter. Push-to-talk text appears in the question
 
 | What | Where | Contents |
 |---|---|---|
-| Conversations | `~/Library/Application Support/MeetingPrompter/conversations.json` (dev build: `MeetingPrompter Dev/`) | At most 50 conversations, newest first. Each has the linked session (id, folder, title, date), the fork id, every question and answer (or error), and the path and SHA-256 digest of the document version each question was asked about. The notes text itself is not stored. |
+| Conversations | `~/Library/Application Support/MeetingPrompter/conversations.json` (dev build: `MeetingPrompter Dev/`) | At most 50 conversations, newest first. Each has the linked session (id, folder, title, date), the fork id, every question and answer (or error, as written at the time: switching the interface language does not change saved text), and the path and SHA-256 digest of the document version each question was asked about. The notes text itself is not stored. |
 | Linked session | The app's settings (`defaults read com.long.meetingprompter linkedSession`) | Session id, folder, title, date |
 | Forks | `~/.claude/projects/…`, written by Claude Code | Full fork transcripts, kept and managed by Claude Code. TalkMargin never deletes them. |
 | Terminal command | The clipboard, when you press **Terminal** | `cd '<folder>' && '<path to claude>' --resume <fork>` |

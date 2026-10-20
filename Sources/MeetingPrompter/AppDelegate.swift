@@ -139,8 +139,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         overlay.onLinkSession = { [unowned self] in link($0) }
         overlay.onSessionPickerOpened = { [unowned self] in refreshClaudeSessions() }
         // The chat's own texts (empty page, status) follow the language; its saved turns do not change.
-        overlay.onLanguageChange = { [unowned self] in chat.onChange?() }
-        clip.onPreview = { [unowned self] in overlay.showRecording($0, placeholder: recordingPlaceholder) }
+        overlay.onLanguageChange = { [unowned self] in overlay.relocalizeAssistant(markdown: chat.markdown, title: chat.title) }
+        clip.onPreview = { [unowned self] in overlay.showRecording($0, placeholder: self.recordingPlaceholder) }
     }
 
     private var recordingPlaceholder: String {
@@ -149,7 +149,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func beginClip() {
         clip.begin()
-        overlay.showRecording("", placeholder: recordingPlaceholder)
+        overlay.showRecording("", placeholder: self.recordingPlaceholder)
     }
 
     private func endClip() {

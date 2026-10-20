@@ -84,6 +84,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
     private var expandedForChat = false
     /// Unsent question text that a new push-to-talk recording continues from.
     private var recordingBase = ""
+    private var recordingPlaceholder: (() -> String)?
     /// App to hand the keyboard back to after typing a question.
     private var previousApp: NSRunningApplication?
 
@@ -294,6 +295,18 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         chat.pin(toHeading: pin)
     }
 
+    /// Language change: the same conversation with its interface texts (empty page, status) in the new
+    /// language. Where the reader is stays: no new pin, and an unchanged text is not even re-rendered.
+    func relocalizeAssistant(markdown: String, title: String) {
+        chatHeaderTitle.base = title
+        guard markdown != chatSource else { return }
+        chatSource = markdown
+        let pinned = chat.isPinned
+        // What a switch changes in a conversation (a running turn's status) is at its end, below the reader.
+        chat.render(markdown, fontSize: chatFontSize, position: .offset(chat.currentOffset))
+        if pinned { chat.pin(toHeading: chatPin) }
+    }
+
     private func confirmCopied(_ count: Int, in title: HeaderTitle) {
         title.showNotice(tr(.noticeCopied, count), seconds: 1.4)
     }
@@ -335,13 +348,23 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
 
     /// Brief confirmation on the terminal button after the command was copied.
     func confirmTerminalCommandCopied() {
-        setTerminalButtonTitle(tr(.noticeCommandCopied))
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            MainActor.assumeIsolated { self?.setTerminalButtonTitle(" Terminal") }
+        terminalCopiedEnd?.cancel()
+        let end = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                self?.terminalCopiedEnd = nil
+                self?.updateTerminalButtonTitle()
+            }
         }
+        terminalCopiedEnd = end
+        updateTerminalButtonTitle()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: end)
     }
 
-    private func setTerminalButtonTitle(_ title: String) {
+    /// Set while the button confirms a copy.
+    private var terminalCopiedEnd: DispatchWorkItem?
+
+    private func updateTerminalButtonTitle() {
+        let title = terminalCopiedEnd == nil ? " Terminal" : tr(.noticeCommandCopied)
         terminalButton.attributedTitle = NSAttributedString(string: title, attributes: [
             .font: NSFont.systemFont(ofSize: 11, weight: .medium), .foregroundColor: NSColor.secondaryLabelColor])
     }
@@ -384,20 +407,23 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
     }
 
     /// Shows push-to-talk text live in the question box, after any unsent text already there.
-    func showRecording(_ preview: String, placeholder: String) {
+    /// The placeholder is built again on a language change while recording or transcribing.
+    func showRecording(_ preview: String, placeholder: @autoclosure @escaping () -> String) {
         setChatVisible(true)
         show()
         if !input.isRecording {
             recordingBase = input.text.trimmingCharacters(in: .whitespacesAndNewlines)
             input.isRecording = true
         }
-        input.placeholder = placeholder
+        recordingPlaceholder = placeholder
+        input.placeholder = placeholder()
         input.text = Self.appending(preview, to: recordingBase)
     }
 
     /// Leaves the recognized text in the box to review, edit and send.
     func finishRecording(_ text: String) {
         input.isRecording = false
+        recordingPlaceholder = nil
         input.placeholder = tr(.inputPlaceholder)
         input.text = Self.appending(text, to: recordingBase)
         recordingBase = ""
@@ -527,7 +553,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         updateExpandButton()
         updateBackButton()
         updateProgress()
-        if !input.isRecording { input.placeholder = tr(.inputPlaceholder) }
+        updateTerminalButtonTitle()
         documentPicker.localize()
         sessionPicker.localize()
         if !documentPicker.isHidden { refreshDocumentPicker() }
@@ -556,7 +582,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
             .withSymbolConfiguration(.init(pointSize: 11, weight: .medium))
         hint(terminalButton, tr(.hintTerminal))
         hint(outlineHandle, tr(.hintOutlineHandle))
-        if !input.isRecording { input.placeholder = tr(.inputPlaceholder) }
+        input.placeholder = input.isRecording ? recordingPlaceholder?() ?? "" : tr(.inputPlaceholder)
     }
 
     // MARK: - Display settings
@@ -1087,7 +1113,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         terminalButton.isBordered = false
         terminalButton.contentTintColor = .secondaryLabelColor
         terminalButton.imagePosition = .imageLeading
-        setTerminalButtonTitle(" Terminal")
+        updateTerminalButtonTitle()
         terminalButton.target = self
         terminalButton.action = #selector(terminalButtonClicked)
         terminalButton.isHidden = true

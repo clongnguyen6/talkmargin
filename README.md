@@ -6,7 +6,7 @@ TalkMargin is a macOS menu-bar app. It shows your Markdown or Word (`.docx`) not
 
 It is for people who talk from prepared notes on calls: presenters, interviewers and interviewees, support and sales engineers, anyone doing a knowledge transfer.
 
-> **Language:** the interface is in English and Vietnamese. Switch it with **Language** (**VI | EN**) in the display settings (the slider button in the overlay header); the change applies at once and is remembered. A new install starts in Vietnamese when macOS prefers Vietnamese over English, otherwise in English; an install that was already in use stays in Vietnamese. This README uses the English names. Claude's answers do not follow this setting: Claude is told to explain in Vietnamese and to write the lines you might say in English (see [docs/claude.md](docs/claude.md)).
+> **Language:** the interface is in English and Vietnamese. Switch it with **Language** (**VI | EN**) in the display settings (the slider button in the overlay header); the change applies at once and is remembered. A new install starts in Vietnamese when macOS prefers Vietnamese over English, otherwise in English; an install that was already in use stays in Vietnamese. Your notes and saved conversations are never translated: a saved question, answer or error message stays in the language it was written in. This README uses the English names. Claude's answers do not follow this setting: Claude is told to explain in Vietnamese and to write the lines you might say in English (see [docs/claude.md](docs/claude.md)).
 
 ![Compact overlay over a video call](docs/images/overlay-compact.png)
 

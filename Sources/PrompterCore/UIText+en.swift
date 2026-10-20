@@ -128,7 +128,7 @@ extension UIText {
         .pickerRecent: "Recent",
         .pickerParentFolder: "Parent folder · {0}",
         .pickerEmptyFolder: "No subfolders or files to open",
-        .pickerSessions: "Claude session that answers",
+        .pickerSessions: "Session Claude answers from",
         .pickerSessionsBusy: "⏳ Claude is answering · switch when done",
         .pickerNoSession: "No linked session",
         .pickerLinked: "Linked · {0}",
