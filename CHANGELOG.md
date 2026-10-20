@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [0.2.1] - 2026-10-20
 
 - The menu-bar menu has **Ngôn ngữ / Language**, labelled the same in both languages, with **Tiếng Việt** and **English**. It switches the interface like the selector in the display settings.
 - Opening TalkMargin again from Finder or Spotlight while it runs shows the overlay. Before, it did nothing, which left `⌥P` as the only way in when macOS hid the menu bar icon beside the notch.
