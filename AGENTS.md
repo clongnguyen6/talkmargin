@@ -17,6 +17,7 @@ Native macOS overlay (Swift 6, AppKit, TextKit 1) for reading meeting notes, wit
 - Swift 6 strict concurrency: UI types are `@MainActor`; callbacks from AppKit/C use `MainActor.assumeIsolated`; audio-thread classes are `@unchecked Sendable` with a lock.
 - Pure, testable logic goes in `PrompterCore` with Swift Testing tests.
 - The overlay must never take keyboard focus from the meeting app except while the question box is in use (`OverlayPanel.acceptsKeyboard`).
+- Paths in `.git/info/exclude` are local only: never force-add, commit or push them, and never bypass the hooks with `--no-verify`.
 
 ## Testing on a Mac
 

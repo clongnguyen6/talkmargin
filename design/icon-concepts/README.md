@@ -15,13 +15,13 @@ Regenerate derivatives: `uv run --with pillow python design/icon-concepts/render
 
 ## Files
 
-The published tree keeps only the selected concept's generated source and glyph, plus the prompts and this tooling:
+The repository tracks only the selected concept's generated source and glyph, plus the prompts and this tooling:
 
 - `soft-reply/generated-source.png`: unmodified generated image, 1254 x 1254, with its C2PA manifest.
 - `soft-reply/menu-template.svg`: editable black glyph, 18 x 18 viewBox.
 - `prompts.json`, `render.py`, this README.
 
-The development tree also has `quiet-cue/` with the same layout, and in each concept folder the outputs of `render.py` (published tree: run it to recreate them for Soft Reply):
+Not tracked: `quiet-cue/` with the same layout, and in each concept folder the outputs of `render.py` (run it to recreate them for Soft Reply):
 
 | File | Purpose / dimensions |
 | --- | --- |
