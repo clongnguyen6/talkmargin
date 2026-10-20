@@ -10,6 +10,8 @@ extension UIText {
         case menuSwitchDocument, menuOpenFile, menuOpenRecent, menuNoRecentFiles, menuClearRecents
         case menuEditFile, menuReload, menuLargerText, menuSmallerText, menuDisplaySettings
         case menuClickThrough, menuMoveToWebcam, menuLaunchAtLogin, menuHelp, menuQuit
+        // The same in both tables, so they can be found in either language (`LanguageMenu`).
+        case menuLanguage, languageVietnamese, languageEnglish
 
         // Pages shown in the notes pane
         case pageHelpTitle, pageHelp, pagePermissionNotice

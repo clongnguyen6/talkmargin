@@ -29,10 +29,44 @@ struct UITextTests {
         }
     }
 
+    /// The only keys meant to read the same in both languages: the status menu's language item,
+    /// so it can be found whatever the interface language. Adding to this set is a deliberate choice.
+    private static let sameInBothLanguages: Set<UIText.Key> = [.menuLanguage, .languageVietnamese, .languageEnglish]
+
     @Test func englishIsNotVietnamese() {
-        // A key copied over untranslated; app names, codes and paths may be the same in both.
+        // A key copied over untranslated, apart from the deliberate exceptions above.
         let same = UIText.Key.allCases.filter { UIText.vietnamese[$0] == UIText.english[$0] }
-        #expect(same.isEmpty, "untranslated: \(same)")
+        #expect(Set(same) == Self.sameInBothLanguages, "untranslated: \(Set(same).subtracting(Self.sameInBothLanguages)); exempt but translated: \(Self.sameInBothLanguages.subtracting(same))")
+    }
+
+    // MARK: - Status menu language item
+
+    @Test func languageMenuReadsTheSameInBothLanguages() {
+        for language in UILanguage.allCases {
+            UIText.$override.withValue(language) {
+                #expect(LanguageMenu.title == "Ngôn ngữ / Language")
+                #expect(LanguageMenu.choices(current: .vi).map(\.title) == ["Tiếng Việt", "English"])
+            }
+        }
+    }
+
+    @Test func languageMenuChecksTheCurrentLanguage() {
+        for current in UILanguage.allCases {
+            let choices = LanguageMenu.choices(current: current)
+            #expect(choices.map(\.language) == [.vi, .en])
+            #expect(choices.filter(\.isCurrent).map(\.language) == [current])
+        }
+    }
+
+    /// The menu and the display settings selector go through one switch (`OverlayController.setLanguage`).
+    @Test func languageMenuUsesTheSelectorsSwitch() throws {
+        let app = Self.sources.appending(path: "MeetingPrompter")
+        let delegate = try String(contentsOf: app.appending(path: "AppDelegate.swift"), encoding: .utf8)
+        let overlay = try String(contentsOf: app.appending(path: "OverlayController.swift"), encoding: .utf8)
+        #expect(delegate.contains("menu.addItem(languageItem())"))
+        #expect(delegate.contains("overlay.setLanguage(language)"))
+        #expect(overlay.contains("case .language(let language): setLanguage(language)"))
+        #expect(overlay.contains("func setLanguage(_ language: UILanguage) {"))
     }
 
     // MARK: - Lookup
@@ -184,13 +218,15 @@ struct UITextTests {
     private static let vietnamese = try! NSRegularExpression(
         pattern: "[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]", options: [.caseInsensitive])
 
-    /// Vietnamese text that is not interface text: what Claude receives, and the old build's menu name.
+    /// Vietnamese text outside the Vietnamese table: what Claude receives, the old build's menu name and the
+    /// bilingual language item.
     private static let allowed: [String: [String]] = [
         "PrompterCore/ClaudeText.swift": ["*"],
         "PrompterCore/UIText+vi.swift": ["*"],
         "PrompterCore/NotesLoader.swift": ["\"*(Tài liệu không có nội dung văn bản.)*\\n\""],
         "PrompterCore/NotesDelivery.swift": ["\"ghi chú\""],
-        "PrompterCore/UIText+en.swift": ["→ Thoát"],
+        // The old build's menu name, and the language item that reads the same in both tables.
+        "PrompterCore/UIText+en.swift": ["→ Thoát", "\"Ngôn ngữ / Language\"", "\"Tiếng Việt\""],
     ]
 
     @Test func noVietnameseLiteralOutsideTheTables() throws {

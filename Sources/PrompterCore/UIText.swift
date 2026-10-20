@@ -69,6 +69,16 @@ public enum UIText {
     }
 }
 
+/// The status menu's language item: one bilingual title and each language in its own name, the same
+/// whatever the interface language, so it is found by someone who cannot read the current one.
+public enum LanguageMenu {
+    public static var title: String { tr(.menuLanguage) }
+
+    public static func choices(current: UILanguage) -> [(language: UILanguage, title: String, isCurrent: Bool)] {
+        UILanguage.allCases.map { ($0, tr($0 == .vi ? .languageVietnamese : .languageEnglish), $0 == current) }
+    }
+}
+
 /// The interface string for `key` in the current language, with `{0}`, `{1}`… filled in.
 public func tr(_ key: UIText.Key, _ arguments: CustomStringConvertible...) -> String {
     UIText.string(key, arguments.map(\.description))

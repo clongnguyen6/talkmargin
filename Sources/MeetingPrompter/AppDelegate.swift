@@ -305,6 +305,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let launchAtLogin = item(tr(.menuLaunchAtLogin), nil, #selector(toggleLaunchAtLogin))
         launchAtLogin.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(launchAtLogin)
+        menu.addItem(languageItem())
         menu.addItem(item(tr(.menuHelp), nil, #selector(showHelp)))
         menu.addItem(item(tr(.menuQuit), nil, #selector(quit)))
     }
@@ -349,6 +350,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             projectItem.submenu = sessions
             submenu.addItem(projectItem)
+        }
+        parent.submenu = submenu
+        return parent
+    }
+
+    /// Same title in both languages; the same switch as the selector in the display settings.
+    private func languageItem() -> NSMenuItem {
+        let parent = NSMenuItem(title: LanguageMenu.title, action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        for choice in LanguageMenu.choices(current: settings.language) {
+            let entry = item(choice.title, nil, #selector(chooseLanguage(_:)))
+            entry.representedObject = choice.language.rawValue
+            entry.state = choice.isCurrent ? .on : .off
+            submenu.addItem(entry)
         }
         parent.submenu = submenu
         return parent
@@ -452,6 +467,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func clearRecents() { settings.recentFiles = [] }
 
     @objc private func showDisplaySettings() { overlay.showDisplaySettings() }
+
+    @objc private func chooseLanguage(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let language = UILanguage(rawValue: raw) else { return }
+        overlay.setLanguage(language)
+    }
 
     @objc private func openRecent(_ sender: NSMenuItem) {
         guard let path = sender.representedObject as? String else { return }

@@ -534,9 +534,9 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
 
     // MARK: - Language
 
-    /// Applies the language chosen in the display settings at once. Only texts change: the
-    /// document, reading position, chat, linked session, question text and focus stay.
-    private func setLanguage(_ language: UILanguage) {
+    /// Applies a language chosen in the display settings or the status menu at once. Only texts change:
+    /// the document, reading position, chat, linked session, question text and focus stay.
+    func setLanguage(_ language: UILanguage) {
         guard language != settings.language else { return }
         settings.language = language
         applyLanguage()

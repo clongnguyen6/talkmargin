@@ -37,6 +37,9 @@ extension UIText {
         .menuLaunchAtLogin: "Mở cùng macOS",
         .menuHelp: "Phím tắt & hướng dẫn",
         .menuQuit: "Thoát",
+        .menuLanguage: "Ngôn ngữ / Language",
+        .languageVietnamese: "Tiếng Việt",
+        .languageEnglish: "English",
 
         // Pages shown in the notes pane
         .pageHelpTitle: "Hướng dẫn",

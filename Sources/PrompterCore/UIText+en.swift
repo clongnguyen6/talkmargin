@@ -37,6 +37,9 @@ extension UIText {
         .menuLaunchAtLogin: "Open at login",
         .menuHelp: "Shortcuts & help",
         .menuQuit: "Quit",
+        .menuLanguage: "Ngôn ngữ / Language",
+        .languageVietnamese: "Tiếng Việt",
+        .languageEnglish: "English",
 
         // Pages shown in the notes pane
         .pageHelpTitle: "Help",
