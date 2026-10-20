@@ -23,7 +23,7 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSMicrophoneUsageDescription</key>
-    <string>TalkMargin chuyển giọng nói của bạn thành chữ trong ô hỏi Claude khi bạn giữ ⌥ /.</string>
+    <string>TalkMargin chuyển giọng nói của bạn thành chữ trong ô hỏi Claude khi bạn giữ ⌥ /. · TalkMargin turns your voice into text in the Claude question box while you hold ⌥ /.</string>
     <key>NSHighResolutionCapable</key>
     <true/>
     <key>CFBundleDocumentTypes</key>

@@ -9,6 +9,8 @@ let app = NSApplication.shared
 let identity = AppIdentity.current
 let hooks = TestHooks.from(identity: identity, environment: ProcessInfo.processInfo.environment)
 let forwarded = CommandLine.arguments.contains(InstanceGate.forwardedArgument)
+// First, before any launch writes settings: an empty domain is what tells a fresh install apart.
+UIText.language = UILanguagePreference.load(from: .standard, domain: Bundle.main.bundleIdentifier ?? ProcessInfo.processInfo.processName)
 let delegate: NSApplicationDelegate
 switch InstanceLock.acquire(at: InstanceLock.url(identity: identity, hooks: hooks)) {
 case .acquired(let lock) where identity.otherInstances().isEmpty:

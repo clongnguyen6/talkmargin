@@ -68,7 +68,7 @@ final class ClaudeChat {
 
     /// Name of the fork in `claude --resume`, so it is not mistaken for the original.
     private var forkName: String? {
-        link.map { ClaudeSession.meetingForkPrefix + $0.title }
+        link.map { ClaudeText.forkName(sessionTitle: $0.title) }
     }
 
     /// Forks this app made for meeting conversations. Not sessions to answer from: the
@@ -142,8 +142,8 @@ final class ClaudeChat {
         let plan = NotesDelivery.plan(path: notes.path, markdown: notes.markdown, context: conversation.notes ?? NotesContext(),
                                       hasHistory: !turns.isEmpty) { [sentTexts] in sentTexts[$0] }
         let version = notes.markdown.isEmpty ? nil : NotesVersion(path: notes.path, markdown: notes.markdown)
-        turns.append(Turn(title: "❓ \(short) · \(time)", quote: short == question ? nil : question,
-                          status: "Đang hỏi Claude…", notes: version))
+        // No status until Claude streams something: the chat then shows `chatAsking` in the current language.
+        turns.append(Turn(title: "❓ \(short) · \(time)", quote: short == question ? nil : question, notes: version))
         let index = turns.count - 1
         activeTurn = index
         persist()
@@ -154,7 +154,7 @@ final class ClaudeChat {
         let request = ClaudeRunner.Request(
             workingDirectory: link.map { URL(fileURLWithPath: $0.cwd) } ?? Self.scratchDirectory,
             resume: forkID ?? link?.id, fork: isNewFork,
-            systemPrompt: Self.systemPrompt, prompt: Self.prompt(question, notes: plan.message), readOnlyTools: link != nil,
+            systemPrompt: ClaudeText.systemPrompt, prompt: ClaudeText.prompt(question, notes: plan.message), readOnlyTools: link != nil,
             name: isNewFork ? forkName : nil)
         runner.run(request) { [weak self] event in
             guard let self else { return }
@@ -186,12 +186,6 @@ final class ClaudeChat {
         }
     }
 
-    /// The question, preceded by what Claude needs to know about the notes.
-    private static func prompt(_ question: String, notes: String?) -> String {
-        [notes, question, "Viết câu trả lời bằng tiếng Việt. Chỉ những câu gợi ý để tôi nói ra trong cuộc họp mới viết bằng tiếng Anh."]
-            .compactMap { $0 }.joined(separator: "\n\n")
-    }
-
     // MARK: - Rendering
 
     var title: String {
@@ -204,16 +198,19 @@ final class ClaudeChat {
     var markdown: String {
         guard !turns.isEmpty else { return Self.emptyPage(link: link) }
         var shownNotes: NotesVersion?
-        return turns.map { turn in
+        return turns.indices.map { index in
+            let turn = turns[index]
             var block = "## \(turn.title)\n\n"
             // Names the document when it changes, so it is clear what each answer was based on.
             if let notes = turn.notes, notes.path != shownNotes?.path {
-                block += "_📄 \(notes.name)_\n\n"
+                block += "_📄 \(notes.path.map { ($0 as NSString).lastPathComponent } ?? tr(.chatUntitledNotes))_\n\n"
                 shownNotes = notes
             }
             if let quote = turn.quote { block += Self.quoted(quote) + "\n\n" }
             if !turn.answer.isEmpty { block += Self.demoteHeadings(Self.clean(turn.answer)) + "\n\n" }
-            if let status = turn.status { block += "_\(status)_\n\n" }
+            if let status = turn.status ?? (index == activeTurn && turn.answer.isEmpty ? tr(.chatAsking) : nil) {
+                block += "_\(status)_\n\n"
+            }
             if let error = turn.error { block += "> ⚠️ \(error)\n" }
             return block
         }.joined(separator: "\n---\n\n")
@@ -240,18 +237,8 @@ final class ClaudeChat {
     }
 
     private static func emptyPage(link: ClaudeSession?) -> String {
-        let session = link.map { "Đang liên kết: **\($0.title)** trong `\($0.cwd)`. Bấm **tiêu đề khung Claude** (hoặc `⌥S`) để đổi session." }
-            ?? "Chưa liên kết session Claude. Bấm **tiêu đề khung Claude** (hoặc `⌥S`) để chọn session Claude Code, để Claude hiểu project."
-        return """
-        ## Hỏi Claude
-
-        \(session)
-
-        - Claude trả lời theo tài liệu đang mở. Đổi tài liệu (`⌥D`) không đổi session hay cuộc trò chuyện: câu hỏi kế tiếp gửi kèm tài liệu mới.
-        - Giữ `⌥ /` để thu âm thanh cuộc họp và micro, nhả ra rồi xem lại chữ trước khi Enter. Giữ thêm lần nữa để nối tiếp.
-        - `⌥K` gõ câu hỏi, Shift+Enter xuống dòng.
-        - `⌥A` hoặc nút `>>` mở / đóng khung này.
-        """
+        let session = link.map { tr(.chatEmptyLinked, $0.displayTitle, $0.cwd) } ?? tr(.chatEmptyNotLinked)
+        return tr(.chatEmptyPage, session)
     }
 
     private static let scratchDirectory: URL = {
@@ -259,20 +246,4 @@ final class ClaudeChat {
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
     }()
-
-    private static let systemPrompt = """
-    You are the user's assistant during a live English-language meeting, shown in a small overlay only the \
-    user can see. Questions may quote what was just said in the meeting ("Others: …" is other participants, \
-    captured by speech recognition, so expect misheard words and infer the intended meaning) followed by the \
-    user's own words ("Tôi: …", often Vietnamese). Messages may include the user's prepared notes in \
-    <meeting_notes>, edits to them, or notices that the user switched documents. Answer from the notes the user \
-    is reading now (the latest ones); earlier notes and answers stay useful background.
-
-    Rules:
-    - Write explanations in Vietnamese. Write anything the user might say out loud in the meeting in natural English.
-    - Be brief and scannable: short bullets, no preamble, no closing remarks. The user reads this mid-conversation.
-    - When a quoted question is directed at the user, give 1-3 short English lines they could say.
-    - Only look at files in the working directory when it is needed to answer accurately, and prefer a few targeted reads. Never change anything.
-    - If you are unsure, say so in one line instead of guessing.
-    """
 }

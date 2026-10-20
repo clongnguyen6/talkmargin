@@ -31,7 +31,7 @@ final class OverlayPicker: DropdownBox, NSTableViewDataSource, NSTableViewDelega
     private static let maxListHeight: CGFloat = 420
 
     private let titleLabel = NSTextField(labelWithString: "")
-    private let hintLabel = NSTextField(labelWithString: "⌥↓ ⌥↑ chọn  ·  ⌥↩ mở  ·  ⌥1…9 mở nhanh")
+    private let hintLabel = NSTextField(labelWithString: tr(.pickerKeys))
     private let table = PickerTableView()
     private let scrollView = NSScrollView()
     private var rows: [Row] = []
@@ -93,6 +93,11 @@ final class OverlayPicker: DropdownBox, NSTableViewDataSource, NSTableViewDelega
 
     required init?(coder: NSCoder) {
         fatalError("init(coder:) is not used")
+    }
+
+    /// Texts of its own; rows and title come from `setRows`.
+    func localize() {
+        hintLabel.stringValue = tr(.pickerKeys)
     }
 
     /// Replaces the rows; `highlight` is the row the keyboard starts on.

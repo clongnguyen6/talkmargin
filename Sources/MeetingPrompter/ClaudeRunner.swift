@@ -1,5 +1,6 @@
 import Foundation
 import os
+import PrompterCore
 
 /// Runs one headless Claude Code turn (`claude -p`) and streams its output.
 @MainActor
@@ -38,7 +39,7 @@ final class ClaudeRunner {
 
     func run(_ request: Request, onEvent: @escaping @MainActor (Event) -> Void) {
         guard let executable = Self.claudeExecutable else {
-            onEvent(.finished(error: "Không tìm thấy lệnh `claude`. Cài Claude Code hoặc thêm nó vào PATH."))
+            onEvent(.finished(error: tr(.claudeNotFound)))
             return
         }
         var arguments = ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages",
@@ -88,7 +89,7 @@ final class ClaudeRunner {
                     parser.consume(stdout.fileHandleForReading.readDataToEndOfFile())
                     if !parser.sawResult {
                         let detail = errorOutput.trimmingCharacters(in: .whitespacesAndNewlines)
-                        onEvent(.finished(error: detail.isEmpty ? "claude thoát với mã \(status)." : String(detail.suffix(600))))
+                        onEvent(.finished(error: detail.isEmpty ? tr(.claudeExited, status) : String(detail.suffix(600))))
                     }
                     self?.process = nil
                 }
@@ -196,7 +197,7 @@ private final class StreamParser: @unchecked Sendable {
         case "result":
             resultSeen = true
             let isError = object["is_error"] as? Bool ?? false
-            emit(.finished(error: isError ? (object["result"] as? String ?? "Lỗi không rõ") : nil))
+            emit(.finished(error: isError ? (object["result"] as? String ?? tr(.claudeUnknownError)) : nil))
         default:
             break
         }

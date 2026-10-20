@@ -299,26 +299,22 @@ final class LaunchCoordinator: NSObject, NSApplicationDelegate {
         RunLoop.main.add(timer, forMode: .common)
     }
 
-    private static let legacyNotice = """
-        Bản cũ của ứng dụng (Meeting Prompter) đang chạy. Hãy thoát bản đó trước (biểu tượng của nó trên thanh menu → Thoát), \
-        rồi mở lại TalkMargin. \
-        Tài liệu bạn vừa mở đã được đưa lên đầu danh sách mở gần đây.
-        """
+    private static var legacyNotice: String {
+        tr(.launchLegacyRunning) + " " + tr(.launchDocumentsKept)
+    }
 
-    private static let keptNotice = """
-        TalkMargin không chuyển được tài liệu sang bản đang chạy. Tài liệu đã được đưa lên đầu danh sách mở gần đây.
-        """
+    private static var keptNotice: String { tr(.launchNotForwarded) }
 
     private static func refusedNotice(holder: InstanceGate.Holder?, documents: Bool) -> String {
-        let which = holder.map { " (\($0.bundleID ?? "bản không đóng gói"), pid \($0.pid))" } ?? ""
-        let lead = "Một bản TalkMargin khác\(which) đang chạy, nên bản này không mở. Hãy thoát bản kia trước."
-        return documents ? lead + " Tài liệu bạn vừa mở đã được đưa lên đầu danh sách mở gần đây." : lead
+        let which = holder.map { " (\($0.bundleID ?? tr(.launchUnbundled)), pid \($0.pid))" } ?? ""
+        let lead = tr(.launchOtherRunning, which)
+        return documents ? lead + " " + tr(.launchDocumentsKept) : lead
     }
 
     private static func noLockNotice(_ reason: String, running: Bool) -> String {
-        let lead = "TalkMargin không dùng được khoá chống mở hai lần (\(reason))."
+        let lead = tr(.launchNoLock, reason)
         return running
-            ? lead + " Một bản khác đang chạy, nên bản này không mở. Tài liệu bạn vừa mở đã được đưa lên đầu danh sách mở gần đây."
-            : lead + " Ứng dụng vẫn chạy, nhưng đừng mở thêm bản thứ hai."
+            ? lead + " " + tr(.launchNoLockOtherRunning) + " " + tr(.launchDocumentsKept)
+            : lead + " " + tr(.launchNoLockAlone)
     }
 }

@@ -56,6 +56,16 @@ final class Settings {
         textOpacity = Self.defaultTextOpacity
     }
 
+    /// Interface language, decided at launch (`UILanguagePreference.load` in main.swift). Not a
+    /// display setting: `resetDisplay` leaves it.
+    var language: UILanguage {
+        get { UIText.language }
+        set {
+            UILanguagePreference.store(newValue, in: defaults)
+            UIText.language = newValue
+        }
+    }
+
     var overlayVisible: Bool {
         get { defaults.object(forKey: "overlayVisible") as? Bool ?? true }
         set { defaults.set(newValue, forKey: "overlayVisible") }

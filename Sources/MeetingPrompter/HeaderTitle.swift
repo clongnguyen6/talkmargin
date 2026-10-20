@@ -11,7 +11,8 @@ final class HeaderTitle {
         didSet { render() }
     }
     private var hint: String?
-    private var notice: String?
+    /// Built again on every render, so a notice follows a language change while it shows.
+    private var notice: (() -> String)?
     private var noticeEnd: DispatchWorkItem?
 
     init(_ label: NSTextField) {
@@ -23,13 +24,13 @@ final class HeaderTitle {
         render()
     }
 
-    func showNotice(_ text: String, seconds: Double) {
+    func showNotice(_ text: @autoclosure @escaping () -> String, seconds: Double) {
         notice = text
         render()
         noticeEnd?.cancel()
         let end = DispatchWorkItem { [weak self] in
             MainActor.assumeIsolated {
-                guard let self, self.notice == text else { return }
+                guard let self else { return }
                 self.notice = nil
                 self.render()
             }
@@ -38,7 +39,13 @@ final class HeaderTitle {
         DispatchQueue.main.asyncAfter(deadline: .now() + seconds, execute: end)
     }
 
+    /// After a language change: the notice is rebuilt; a hover hint is dropped until the pointer moves again.
+    func relocalize() {
+        hint = nil
+        render()
+    }
+
     private func render() {
-        label.stringValue = notice ?? hint ?? base
+        label.stringValue = notice?() ?? hint ?? base
     }
 }

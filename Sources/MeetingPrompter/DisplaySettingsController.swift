@@ -1,6 +1,7 @@
 import AppKit
+import PrompterCore
 
-/// Live display controls: backdrop, blur, text band, text opacity, font size.
+/// Live display controls: backdrop, blur, text band, text opacity, font size, and the interface language.
 /// Shown in a dropdown inside the overlay, so every control takes the first click.
 @MainActor
 final class DisplaySettingsController: NSViewController {
@@ -8,19 +9,33 @@ final class DisplaySettingsController: NSViewController {
         case appearance
         case fontSize(Double)
         case reset
+        case language(UILanguage)
     }
 
     private let settings: Settings
     private let onChange: (Change) -> Void
 
     private let backdropSlider = FirstClickSlider(0...100)
-    private let blurSwitch = HeaderButton.checkbox("Làm mờ app phía sau")
+    private let blurSwitch = HeaderButton.checkbox("")
     private let bandSlider = FirstClickSlider(0...100)
     private let textSlider = FirstClickSlider(40...100)
     private let backdropValue = NSTextField(labelWithString: "")
     private let bandValue = NSTextField(labelWithString: "")
     private let textValue = NSTextField(labelWithString: "")
     private let fontValue = NSTextField(labelWithString: "")
+    private let languageControl = FirstClickSegmentedControl(labels: UILanguage.allCases.map(\.code), trackingMode: .selectOne,
+                                                             target: nil, action: nil)
+    private let backdropName = name()
+    private let bandName = name()
+    private let textName = name()
+    private let fontName = name()
+    private let languageName = name()
+    private let titleLabel = NSTextField(labelWithString: "")
+    private let hint = NSTextField(wrappingLabelWithString: "")
+    private let reset = HeaderButton()
+    private let grid = NSGridView()
+    private var hintWidth: NSLayoutConstraint?
+    private var stackWidth: NSLayoutConstraint?
 
     init(settings: Settings, onChange: @escaping (Change) -> Void) {
         self.settings = settings
@@ -56,49 +71,72 @@ final class DisplaySettingsController: NSViewController {
         }
         let fontControls = NSStackView(views: [smaller, bigger])
         fontControls.spacing = 4
+        languageControl.target = self
+        languageControl.action = #selector(choseLanguage)
+        languageControl.controlSize = .small
+        // Clicking it must not move the keyboard focus (e.g. away from the question box).
+        languageControl.refusesFirstResponder = true
 
-        let grid = NSGridView(views: [
-            [Self.name("Nền"), backdropSlider, backdropValue],
+        for row in [
+            [backdropName, backdropSlider, backdropValue],
             [NSGridCell.emptyContentView, blurSwitch, NSGridCell.emptyContentView],
-            [Self.name("Nền sau chữ"), bandSlider, bandValue],
-            [Self.name("Độ đậm chữ"), textSlider, textValue],
-            [Self.name("Cỡ chữ"), fontControls, fontValue],
-        ])
+            [bandName, bandSlider, bandValue],
+            [textName, textSlider, textValue],
+            [fontName, fontControls, fontValue],
+            [languageName, languageControl, NSGridCell.emptyContentView],
+        ] { grid.addRow(with: row) }
         grid.rowSpacing = 10
         grid.columnSpacing = 10
         grid.column(at: 0).xPlacement = .trailing
         grid.rowAlignment = .firstBaseline
         grid.cell(for: blurSwitch)?.row?.topPadding = -4
 
-        let hint = NSTextField(wrappingLabelWithString: "Tắt làm mờ để nhìn xuyên (ví dụ màn hình đang share); tăng \"Nền sau chữ\" để chữ vẫn rõ trên nền sáng.")
         hint.font = .systemFont(ofSize: 11)
         hint.textColor = .tertiaryLabelColor
 
-        let reset = HeaderButton.push("Mặc định", target: self, action: #selector(resetAll))
+        reset.target = self
+        reset.action = #selector(resetAll)
         reset.bezelStyle = .rounded
         reset.controlSize = .small
 
-        let title = NSTextField(labelWithString: "Hiển thị")
-        title.font = .systemFont(ofSize: 13, weight: .semibold)
+        titleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
 
-        let stack = NSStackView(views: [title, grid, hint, reset])
+        let stack = NSStackView(views: [titleLabel, grid, hint, reset])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 12
         stack.edgeInsets = NSEdgeInsets(top: 14, left: 16, bottom: 14, right: 16)
         view = stack
-        // The hint wraps to the controls' width, and the popover sizes to fit both.
+        hintWidth = hint.widthAnchor.constraint(equalToConstant: 0)
+        stackWidth = stack.widthAnchor.constraint(equalToConstant: 0)
+        NSLayoutConstraint.activate([hintWidth!, stackWidth!])
+        localize()
+    }
+
+    /// Labels in the current language; the box is sized again since the label column changes width.
+    func localize() {
+        guard isViewLoaded, let stack = view as? NSStackView else { return }
+        titleLabel.stringValue = tr(.displayTitle)
+        backdropName.stringValue = tr(.displayBackdrop)
+        blurSwitch.title = tr(.displayBlur)
+        bandName.stringValue = tr(.displayTextBand)
+        textName.stringValue = tr(.displayTextOpacity)
+        fontName.stringValue = tr(.displayFontSize)
+        languageName.stringValue = tr(.displayLanguage)
+        hint.stringValue = tr(.displayHint, tr(.displayTextBand))
+        reset.title = tr(.displayDefaults)
+        // The hint wraps to the controls' width, and the dropdown sizes to fit both.
         let gridWidth = grid.fittingSize.width
         hint.preferredMaxLayoutWidth = gridWidth
-        hint.widthAnchor.constraint(equalToConstant: gridWidth).isActive = true
-        stack.widthAnchor.constraint(equalToConstant: gridWidth + stack.edgeInsets.left + stack.edgeInsets.right).isActive = true
+        hintWidth?.constant = gridWidth
+        stackWidth?.constant = gridWidth + stack.edgeInsets.left + stack.edgeInsets.right
         stack.frame.size = stack.fittingSize
         preferredContentSize = stack.frame.size
         refresh()
     }
 
-    private static func name(_ text: String) -> NSTextField {
-        let label = NSTextField(labelWithString: text)
+    private static func name() -> NSTextField {
+        let label = NSTextField(labelWithString: "")
         label.font = .systemFont(ofSize: 12)
         return label
     }
@@ -110,12 +148,13 @@ final class DisplaySettingsController: NSViewController {
         blurSwitch.state = settings.blurBehind ? .on : .off
         bandSlider.doubleValue = settings.textBand * 100
         textSlider.doubleValue = settings.textOpacity * 100
+        languageControl.selectedSegment = UILanguage.allCases.firstIndex(of: settings.language) ?? 0
         updateLabels()
     }
 
     private func updateLabels() {
         backdropValue.stringValue = "\(Int(backdropSlider.doubleValue.rounded()))%"
-        bandValue.stringValue = bandSlider.doubleValue < 1 ? "Tắt" : "\(Int(bandSlider.doubleValue.rounded()))%"
+        bandValue.stringValue = bandSlider.doubleValue < 1 ? tr(.displayOff) : "\(Int(bandSlider.doubleValue.rounded()))%"
         textValue.stringValue = "\(Int(textSlider.doubleValue.rounded()))%"
         fontValue.stringValue = "\(Int(settings.fontSize))pt"
     }
@@ -143,6 +182,11 @@ final class DisplaySettingsController: NSViewController {
         updateLabels()
     }
 
+    @objc private func choseLanguage() {
+        guard UILanguage.allCases.indices.contains(languageControl.selectedSegment) else { return }
+        onChange(.language(UILanguage.allCases[languageControl.selectedSegment]))
+    }
+
     @objc private func resetAll() {
         settings.resetDisplay()
         refresh()
@@ -155,6 +199,10 @@ private final class FirstClickSlider: NSSlider {
         self.init(value: range.lowerBound, minValue: range.lowerBound, maxValue: range.upperBound, target: nil, action: nil)
     }
 
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+}
+
+private final class FirstClickSegmentedControl: NSSegmentedControl {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 

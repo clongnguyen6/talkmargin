@@ -18,7 +18,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
     var onSubmitQuestion: ((String) -> Void)?
     /// Called by the terminal button in the chat header.
     var onContinueInTerminal: (() -> Void)?
-    /// Called by "Mở file khác…" in the document picker.
+    /// Called by the open dialog row in the document picker.
     var onOpenOtherFile: (() -> Void)?
     /// Called with the session chosen in the session picker (nil: none).
     var onLinkSession: ((ClaudeSession?) -> Void)?
@@ -26,6 +26,8 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
     var onSessionPickerOpened: (() -> Void)?
     /// Session last used with a document; shown as a hint in the session picker, never applied.
     var suggestedSession: ((String) -> ClaudeSession?)?
+    /// Called after the interface language changed, once the overlay's own texts follow it.
+    var onLanguageChange: (() -> Void)?
 
     private let settings: Settings
     private let notes = MarkdownPane()
@@ -64,12 +66,14 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
     /// Document Claude was last told is on screen.
     private var claudeDocumentPath: String?
     /// Visible only when the overlay is capturable (a dev or verification build with MP_ALLOW_CAPTURE=1).
-    private let captureLabel = NSTextField(labelWithString: "● ĐANG CHO CHỤP MÀN HÌNH")
+    private let captureLabel = NSTextField(labelWithString: "")
     /// Back button, capture label and progress, right-aligned; hidden ones take no room.
     private let headerTrailing = NSStackView()
     private let blur = NSVisualEffectView()
     private let backdrop = NSView()
     private var notesSource = ""
+    /// Rebuilds the page `showMarkdown` shows (help, errors) in the current language.
+    private var page: (() -> (markdown: String, title: String))?
     private var loadFailed = false
     private var notesTitle = ""
     private var chatSource = ""
@@ -113,6 +117,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         notes.clearHistory()
         watcher?.stop()
         fileURL = url
+        page = nil
         settings.noteOpened(url)
         watcher = FileWatcher(url: url) { [weak self] in self?.reload() }
         load(offset: settings.scrollOffset(for: url.path))
@@ -122,22 +127,32 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         load(offset: notes.currentOffset)
     }
 
-    func showMarkdown(_ markdown: String, title: String) {
+    /// Shows an app page instead of a document. Both texts are evaluated again when the
+    /// interface language changes, so pass them as built from `tr`.
+    func showMarkdown(_ markdown: @autoclosure @escaping () -> String, title: @autoclosure @escaping () -> String) {
         closePickers()
         saveScrollPosition()
         watcher?.stop()
         watcher = nil
         fileURL = nil
-        notesSource = markdown
+        page = { (markdown(), title()) }
         loadFailed = false
-        notesTitle = title
-        fileTitle.base = title
         notes.clearHistory()
-        renderNotes(position: .top)
+        showPage(position: .top)
+    }
+
+    private func showPage(position: MarkdownPane.Position) {
+        guard let page = page?() else { return }
+        notesSource = page.markdown
+        notesTitle = page.title
+        fileTitle.base = page.title
+        renderNotes(position: position)
     }
 
     private func renderNotes(position: MarkdownPane.Position) {
-        notes.render(notesSource, fontSize: settings.fontSize, position: position)
+        // Claude gets the loader's text for an empty .docx (`notesMarkdown`); the reader sees it in the interface language.
+        let shown = notesSource == NotesLoader.emptyDocxMarkdown ? tr(.emptyDocxNotes) : notesSource
+        notes.render(shown, fontSize: settings.fontSize, position: position)
         outline.setHeadings(notes.headings)
         notesDidScroll()
     }
@@ -148,7 +163,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
             notesSource = try NotesLoader.load(url).markdown
             loadFailed = false
         } catch {
-            notesSource = "## Không đọc được file\n\n`\(url.path)`\n\n\(error.localizedDescription)"
+            notesSource = "## \(tr(.pageCannotRead))\n\n`\(url.path)`\n\n\(error.localizedDescription)"
             loadFailed = true
         }
         notesTitle = url.lastPathComponent
@@ -241,7 +256,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         outlineButton.image = NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
         outlineButton.contentTintColor = isOutlineVisible ? .labelColor : .secondaryLabelColor
-        hint(outlineButton, isOutlineVisible ? "Ẩn mục lục (⌥O bên phải)" : "Hiện mục lục (⌥O bên phải)")
+        hint(outlineButton, tr(isOutlineVisible ? .hintHideOutline : .hintShowOutline))
     }
 
     @objc private func outlineButtonClicked() {
@@ -254,11 +269,11 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
             backButton.isHidden = true
             return
         }
-        let name = notes.backSection?.text ?? "Quay lại"
+        let name = notes.backSection?.text ?? tr(.backFallback)
         let short = name.count > 22 ? String(name.prefix(22)).trimmingCharacters(in: .whitespaces) + "…" : name
         backButton.attributedTitle = NSAttributedString(string: "↩ " + short, attributes: [
             .font: NSFont.systemFont(ofSize: 11, weight: .medium), .foregroundColor: NSColor.controlAccentColor])
-        hint(backButton, "Quay lại: \(name) (⌥← bên phải)")
+        hint(backButton, tr(.hintBack, name))
         backButton.isHidden = false
     }
 
@@ -280,18 +295,18 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
     }
 
     private func confirmCopied(_ count: Int, in title: HeaderTitle) {
-        title.showNotice("✓ Đã copy \(count) ký tự", seconds: 1.4)
+        title.showNotice(tr(.noticeCopied, count), seconds: 1.4)
     }
 
     /// A notice in the file name's place in the header, inside the overlay (invisible to screen sharing).
-    func showNotice(_ text: String, seconds: Double) {
-        fileTitle.showNotice(text, seconds: seconds)
+    func showNotice(_ text: @autoclosure @escaping () -> String, seconds: Double) {
+        fileTitle.showNotice(text(), seconds: seconds)
     }
 
     /// Brief notice in the chat title, e.g. when the chat refused a change while answering.
     /// Survives the chat re-rendering underneath it.
-    func flashChatTitle(_ text: String) {
-        chatHeaderTitle.showNotice(text, seconds: 2.2)
+    func flashChatTitle(_ text: @autoclosure @escaping () -> String) {
+        chatHeaderTitle.showNotice(text(), seconds: 2.2)
     }
 
     /// Hint text shown in the panel while hovering `view`: in the chat title for
@@ -320,7 +335,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
 
     /// Brief confirmation on the terminal button after the command was copied.
     func confirmTerminalCommandCopied() {
-        setTerminalButtonTitle("✓ Đã copy lệnh")
+        setTerminalButtonTitle(tr(.noticeCommandCopied))
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             MainActor.assumeIsolated { self?.setTerminalButtonTitle(" Terminal") }
         }
@@ -383,7 +398,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
     /// Leaves the recognized text in the box to review, edit and send.
     func finishRecording(_ text: String) {
         input.isRecording = false
-        input.placeholder = Self.inputPlaceholder
+        input.placeholder = tr(.inputPlaceholder)
         input.text = Self.appending(text, to: recordingBase)
         recordingBase = ""
         focusInput()
@@ -392,8 +407,6 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
     private static func appending(_ text: String, to base: String) -> String {
         [base, text].filter { !$0.isEmpty }.joined(separator: "\n")
     }
-
-    private static let inputPlaceholder = "Hỏi Claude…  Enter gửi · Esc huỷ · giữ ⌥ / để nói"
 
     /// The panel only takes the keyboard while the question box is in use,
     /// and hands it back to the previous app afterwards.
@@ -424,14 +437,14 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
     // MARK: - Header
 
     private func updateProgress() {
-        progressLabel.stringValue = (clickThrough ? "xuyên chuột  ·  " : "") + "\(notes.progress)%"
+        progressLabel.stringValue = (clickThrough ? tr(.clickThroughProgress) + "  ·  " : "") + "\(notes.progress)%"
     }
 
     private func updateChatButton() {
         let symbol = isChatVisible ? "chevron.left.2" : "chevron.right.2"
         chatButton.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
-        hint(chatButton, isChatVisible ? "Đóng khung Claude (⌥A bên phải)" : "Mở khung Claude (⌥A bên phải)")
+        hint(chatButton, tr(isChatVisible ? .hintCloseChat : .hintOpenChat))
     }
 
     @objc private func chatButtonClicked() {
@@ -493,6 +506,59 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         chat.render(chatSource, fontSize: chatFontSize, position: .offset(chat.currentOffset))
     }
 
+    // MARK: - Language
+
+    /// Applies the language chosen in the display settings at once. Only texts change: the
+    /// document, reading position, chat, linked session, question text and focus stay.
+    private func setLanguage(_ language: UILanguage) {
+        guard language != settings.language else { return }
+        settings.language = language
+        applyLanguage()
+        onLanguageChange?()
+    }
+
+    /// Relabels everything the overlay shows in the current language.
+    func applyLanguage() {
+        localizeFixedTexts()
+        fileTitle.relocalize()
+        chatHeaderTitle.relocalize()
+        updateOutlineButton()
+        updateChatButton()
+        updateExpandButton()
+        updateBackButton()
+        updateProgress()
+        if !input.isRecording { input.placeholder = tr(.inputPlaceholder) }
+        documentPicker.localize()
+        sessionPicker.localize()
+        if !documentPicker.isHidden { refreshDocumentPicker() }
+        if !sessionPicker.isHidden { refreshSessionPicker() }
+        displaySettings.localize()
+        let size = displaySettings.preferredContentSize
+        displayBoxSize?.width.constant = size.width
+        displayBoxSize?.height.constant = size.height
+        if page != nil {
+            showPage(position: .keepReadingPosition)
+        } else if loadFailed {
+            reload()
+        } else if notesSource == NotesLoader.emptyDocxMarkdown {
+            renderNotes(position: .keepReadingPosition)
+        }
+    }
+
+    /// Texts that do not depend on state: set when the view is built and on a language change.
+    private func localizeFixedTexts() {
+        captureLabel.stringValue = tr(.captureAllowed)
+        displayButton.image = NSImage(systemSymbolName: "slider.horizontal.3", accessibilityDescription: tr(.accessibilityDisplay))?
+            .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
+        hint(displayButton, tr(.hintDisplay))
+        // A neutral terminal glyph: the button works with any terminal, not only Apple's Terminal.
+        terminalButton.image = NSImage(systemSymbolName: "terminal", accessibilityDescription: tr(.accessibilityTerminal))?
+            .withSymbolConfiguration(.init(pointSize: 11, weight: .medium))
+        hint(terminalButton, tr(.hintTerminal))
+        hint(outlineHandle, tr(.hintOutlineHandle))
+        if !input.isRecording { input.placeholder = tr(.inputPlaceholder) }
+    }
+
     // MARK: - Display settings
 
     private lazy var displaySettings = DisplaySettingsController(settings: settings) { [weak self] change in
@@ -500,11 +566,13 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         switch change {
         case .appearance, .reset: applyAppearance()
         case .fontSize(let delta): changeFontSize(by: delta)
+        case .language(let language): setLanguage(language)
         }
     }
     /// Drawn inside the overlay (a popover would be a separate window, unprotected
     /// until its `sharingType` could be set). Scrolls when the overlay is short.
     private let displayBox = DropdownBox()
+    private var displayBoxSize: (width: NSLayoutConstraint, height: NSLayoutConstraint)?
 
     func showDisplaySettings() {
         if !displayBox.isHidden { return closePickers() }
@@ -533,6 +601,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         height.priority = .dragThatCannotResizeWindow
         let width = displayBox.widthAnchor.constraint(equalToConstant: size.width)
         width.priority = .dragThatCannotResizeWindow
+        displayBoxSize = (width, height)
         NSLayoutConstraint.activate([
             scroll.topAnchor.constraint(equalTo: displayBox.topAnchor),
             scroll.bottomAnchor.constraint(equalTo: displayBox.bottomAnchor),
@@ -618,26 +687,26 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         let recents = settings.openableRecentFiles
         var rows: [OverlayPicker.Row] = recents.map { path in
             var detail = PathLabel.folder(of: path, home: home)
-            if path == claudeDocumentPath { detail += "  ·  Claude đang có tài liệu này" }
+            if path == claudeDocumentPath { detail += "  ·  " + tr(.pickerClaudeHasDocument) }
             return .item(id: path, title: (path as NSString).lastPathComponent, detail: detail, isCurrent: path == fileURL?.path)
         }
-        if rows.isEmpty { rows.append(.header("Chưa mở file nào")) }
+        if rows.isEmpty { rows.append(.header(tr(.pickerNoFiles))) }
         // Browsing stays inside the overlay; the system dialog's menus are drawn by another process
         // and show up in screen sharing, so it is for use outside a share.
-        rows.append(.action(id: Self.browseID, title: "Duyệt thư mục…", symbol: "folder"))
-        rows.append(.action(id: Self.openOtherID, title: "Hộp thoại mở file… (ngoài lúc share)", symbol: "macwindow"))
+        rows.append(.action(id: Self.browseID, title: tr(.pickerBrowse), symbol: "folder"))
+        rows.append(.action(id: Self.openOtherID, title: tr(.pickerOpenDialog), symbol: "macwindow"))
         // Start on the most recent other document, the usual target of a switch; else on browsing.
         let highlight = recents.firstIndex { $0 != fileURL?.path } ?? rows.count - 2
-        documentPicker.setRows(rows, title: "Tài liệu", highlight: highlight)
+        documentPicker.setRows(rows, title: tr(.pickerDocuments), highlight: highlight)
     }
 
     /// Lists `folder` in the document picker: subfolders to enter, supported files to open.
     private func showFolder(_ folder: URL) {
         let home = FileManager.default.homeDirectoryForCurrentUser.path
-        var rows: [OverlayPicker.Row] = [.action(id: Self.recentsID, title: "Gần đây", symbol: "clock.arrow.circlepath")]
+        var rows: [OverlayPicker.Row] = [.action(id: Self.recentsID, title: tr(.pickerRecent), symbol: "clock.arrow.circlepath")]
         let parent = folder.deletingLastPathComponent()
         if parent.path != folder.path {
-            rows.append(.action(id: Self.parentID, title: "Thư mục cha · \(PathLabel.abbreviated(parent.path, home: home))", symbol: "arrow.up"))
+            rows.append(.action(id: Self.parentID, title: tr(.pickerParentFolder, PathLabel.abbreviated(parent.path, home: home)), symbol: "arrow.up"))
         }
         let highlight = rows.count
         let found = (try? FileManager.default.contentsOfDirectory(
@@ -652,37 +721,38 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
                 ? .action(id: Self.folderPrefix + path, title: entry.name, symbol: "folder")
                 : .item(id: path, title: entry.name, detail: nil, isCurrent: path == fileURL?.path))
         }
-        if rows.count == highlight { rows.append(.header("Không có thư mục con hay file mở được")) }
+        if rows.count == highlight { rows.append(.header(tr(.pickerEmptyFolder))) }
         documentPicker.setRows(rows, title: "📁 " + PathLabel.abbreviated(folder.path, home: home),
                                highlight: min(highlight, rows.count - 1))
     }
 
     private func refreshSessionPicker() {
         var rows: [OverlayPicker.Row] = [
-            .item(id: Self.noSessionID, title: "Không liên kết session", detail: nil, isCurrent: linkedSession == nil),
+            .item(id: Self.noSessionID, title: tr(.pickerNoSession), detail: nil, isCurrent: linkedSession == nil),
         ]
         var highlight: Int? = linkedSession == nil ? 0 : nil
         let suggested = fileURL.flatMap { suggestedSession?($0.path) }
         func add(_ session: ClaudeSession) {
             if session.id == linkedSession?.id { highlight = rows.count }
             // The id tells apart sessions whose titles truncate alike; first, so middle truncation keeps it.
-            var detail = String(session.id.prefix(8)) + "  ·  " + session.modified.formatted(.relative(presentation: .named))
-            if session.id == suggested?.id, let name = fileURL?.lastPathComponent { detail += "  ·  đã dùng với \(name)" }
-            rows.append(.item(id: session.id, title: session.title, detail: detail, isCurrent: session.id == linkedSession?.id))
+            var detail = String(session.id.prefix(8)) + "  ·  "
+                + session.modified.formatted(.relative(presentation: .named).locale(UIText.language.locale))
+            if session.id == suggested?.id, let name = fileURL?.lastPathComponent { detail += "  ·  " + tr(.pickerUsedWith, name) }
+            rows.append(.item(id: session.id, title: session.displayTitle, detail: detail, isCurrent: session.id == linkedSession?.id))
         }
         // The linked session stays visible even when it is no longer among the recent ones.
         if let linkedSession, !claudeProjects.contains(where: { $0.sessions.contains { $0.id == linkedSession.id } }) {
-            rows.append(.header("Đang liên kết · \((linkedSession.cwd as NSString).lastPathComponent)"))
+            rows.append(.header(tr(.pickerLinked, (linkedSession.cwd as NSString).lastPathComponent)))
             add(linkedSession)
         }
         if claudeProjects.isEmpty {
-            rows.append(.header(catalogLoaded ? "Không tìm thấy session nào trong ~/.claude/projects" : "Đang đọc ~/.claude/projects…"))
+            rows.append(.header(tr(catalogLoaded ? .menuNoSessions : .pickerReadingSessions)))
         }
         for project in claudeProjects {
             rows.append(.header(project.name))
             project.sessions.forEach(add)
         }
-        let title = chatBusy ? "⏳ Claude đang trả lời · đổi session sau khi xong" : "Session Claude trả lời câu hỏi"
+        let title = tr(chatBusy ? .pickerSessionsBusy : .pickerSessions)
         sessionPicker.setRows(rows, title: title, highlight: highlight)
     }
 
@@ -798,7 +868,7 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         let symbol = isExpanded ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right"
         expandButton.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
-        hint(expandButton, isExpanded ? "Thu gọn (⌥E bên phải)" : "Mở rộng (⌥E bên phải)")
+        hint(expandButton, tr(isExpanded ? .hintCompact : .hintExpand))
     }
 
     @objc private func expandButtonClicked() {
@@ -922,9 +992,6 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         expandButton.action = #selector(expandButtonClicked)
         outlineButton.action = #selector(outlineButtonClicked)
         displayButton.action = #selector(displayButtonClicked)
-        displayButton.image = NSImage(systemSymbolName: "slider.horizontal.3", accessibilityDescription: "Hiển thị")?
-            .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
-        hint(displayButton, "Tuỳ chỉnh hiển thị: nền, làm mờ, nền sau chữ, độ đậm và cỡ chữ")
         backButton.action = #selector(backButtonClicked)
         backButton.contentTintColor = .controlAccentColor
         backButton.isHidden = true
@@ -1007,7 +1074,6 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         chatColumn.wantsLayer = true
         chatColumn.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.12).cgColor
         input.translatesAutoresizingMaskIntoConstraints = false
-        input.placeholder = Self.inputPlaceholder
         input.onSubmit = { [weak self] text in
             guard let self else { return }
             input.text = ""
@@ -1020,12 +1086,8 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         }
         terminalButton.isBordered = false
         terminalButton.contentTintColor = .secondaryLabelColor
-        // A neutral terminal glyph: the button works with any terminal, not only Apple's Terminal.
-        terminalButton.image = NSImage(systemSymbolName: "terminal", accessibilityDescription: "Tiếp tục trong terminal")?
-            .withSymbolConfiguration(.init(pointSize: 11, weight: .medium))
         terminalButton.imagePosition = .imageLeading
         setTerminalButtonTitle(" Terminal")
-        hint(terminalButton, "Copy lệnh claude --resume của cuộc trò chuyện này và mở terminal (⌘T, ⌘V, Enter)")
         terminalButton.target = self
         terminalButton.action = #selector(terminalButtonClicked)
         terminalButton.isHidden = true
@@ -1047,7 +1109,6 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         split.setHoldingPriority(.defaultLow + 1, forSubviewAt: 1)
         background.addSubview(split)
         // Above the split view so it can straddle the outline's edge.
-        hint(outlineHandle, "Kéo để đổi độ rộng mục lục, double-click để về mặc định")
         outlineHandle.translatesAutoresizingMaskIntoConstraints = false
         background.addSubview(outlineHandle)
         setUpOutlineHandle()
@@ -1084,6 +1145,8 @@ final class OverlayController: NSObject, NSWindowDelegate, NSSplitViewDelegate {
         // Centered when there is room; a long name or the back button shifts it instead of squeezing it.
         let titleCenter = titleGroup.centerXAnchor.constraint(equalTo: background.centerXAnchor)
         titleCenter.priority = .init(Self.titleCompression.rawValue - 100)
+
+        localizeFixedTexts()
 
         NSLayoutConstraint.activate([
             expandButton.leadingAnchor.constraint(equalTo: background.leadingAnchor, constant: 12),

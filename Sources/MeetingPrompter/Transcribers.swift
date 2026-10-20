@@ -63,7 +63,7 @@ final class ClipTranscriber {
             do {
                 try await capture.acquire()
             } catch {
-                notice = "Không thu được âm thanh: \(error.localizedDescription)"
+                notice = tr(.recordingNoAudio, error.localizedDescription)
                 onPreview?("")
                 return false
             }
@@ -109,11 +109,7 @@ final class ClipTranscriber {
         var mine = !vietnamese.text.isEmpty && (english.text.isEmpty || vietnamese.confidence > english.confidence)
             ? vietnamese.text : english.text
         if EchoFilter.isEcho(mine, of: others) { mine = "" }
-        switch (others.isEmpty, mine.isEmpty) {
-        case (false, false): return "Others: \(others)\nTôi: \(mine)"
-        case (false, true): return "Others: \(others)"
-        default: return mine
-        }
+        return ClaudeText.transcript(others: others, mine: mine)
     }
 
     private func pipeline(_ language: SpeechPipeline.Language, for source: Source) async throws -> SpeechPipeline {
@@ -127,7 +123,7 @@ final class ClipTranscriber {
 
     private func downloadVietnamese() {
         guard vietnameseDownload == nil else { return }
-        notice = "Đang tải model tiếng Việt, lần này chỉ nhận dạng tiếng Anh."
+        notice = tr(.recordingVietnameseDownloading)
         vietnameseDownload = Task {
             do {
                 try await SpeechPipeline.install(.vietnamese)

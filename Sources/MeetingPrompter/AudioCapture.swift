@@ -1,6 +1,7 @@
 import AVFoundation
 import ScreenCaptureKit
 import os
+import PrompterCore
 
 /// One ScreenCaptureKit stream for system audio (other participants) and the
 /// microphone. It runs only while something holds it, e.g. a push-to-talk clip.
@@ -9,7 +10,7 @@ final class AudioCapture {
     enum Failure: LocalizedError {
         case noDisplay
 
-        var errorDescription: String? { "Không tìm thấy màn hình để thu âm thanh hệ thống." }
+        var errorDescription: String? { tr(.audioNoDisplay) }
     }
 
     let router = AudioRouter()

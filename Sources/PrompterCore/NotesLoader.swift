@@ -20,17 +20,17 @@ public enum NotesLoadError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .unreadable(_, let underlying):
-            return "Không đọc được file: \(underlying.localizedDescription)"
+            return tr(.loadUnreadable, underlying.localizedDescription)
         case .invalidDocx(_, let failure):
             switch failure {
             case .notZip:
-                return "File không phải định dạng Word .docx (không phải gói zip)."
+                return tr(.loadNotZip)
             case .corrupt(let detail):
-                return "File .docx bị hỏng hoặc không hỗ trợ: \(detail)"
+                return tr(.loadCorrupt, detail)
             case .missingDocument:
-                return "File .docx thiếu phần nội dung (word/document.xml)."
+                return tr(.loadMissingDocument)
             case .malformedXML(let part, let detail):
-                return "Nội dung .docx bị hỏng (\(part)): \(detail)"
+                return tr(.loadMalformedXML, part, detail)
             }
         }
     }
@@ -40,6 +40,10 @@ public enum NotesLoadError: LocalizedError {
 public enum NotesLoader {
     /// Lowercased extensions the loader accepts. Anything else is read as markdown text.
     public static let supportedExtensions = ["md", "markdown", "txt", "docx"]
+
+    /// The notes of a `.docx` with no text. Claude receives it as is, whatever the interface
+    /// language; the overlay shows `UIText.Key.emptyDocxNotes` in its place.
+    public static let emptyDocxMarkdown = "*(Tài liệu không có nội dung văn bản.)*\n"
 
     public static func isSupported(_ url: URL) -> Bool {
         supportedExtensions.contains(url.pathExtension.lowercased())
@@ -69,7 +73,7 @@ public enum NotesLoader {
             do {
                 let markdown = try DocxToMarkdown.convert(docx: data)
                 return NotesDocument(url: url, format: .docx,
-                                     markdown: markdown.isEmpty ? "*(Tài liệu không có nội dung văn bản.)*\n" : markdown)
+                                     markdown: markdown.isEmpty ? emptyDocxMarkdown : markdown)
             } catch let failure as DocxToMarkdown.Failure {
                 throw NotesLoadError.invalidDocx(url, failure)
             }

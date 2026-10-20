@@ -17,6 +17,7 @@ public struct NotesVersion: Codable, Equatable, Sendable {
         self.digest = digest
     }
 
+    /// Used in what Claude is told, so never translated; the chat shows `UIText.Key.chatUntitledNotes` for no path.
     public var name: String { path.map { ($0 as NSString).lastPathComponent } ?? "ghi chú" }
 
     /// Same document (not necessarily the same version). Unsaved notes are told apart by content.

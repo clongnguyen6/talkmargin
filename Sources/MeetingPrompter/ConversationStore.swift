@@ -51,7 +51,7 @@ struct Conversation: Codable, Identifiable {
 
     /// First question, for listing past conversations.
     var summary: String {
-        turns.first.map { $0.quote ?? $0.title } ?? "Cuộc trò chuyện trống"
+        turns.first.map { $0.quote ?? $0.title } ?? tr(.chatEmptyConversation)
     }
 }
 

@@ -1,4 +1,5 @@
 import AVFoundation
+import PrompterCore
 import Speech
 
 /// One on-device recognizer fed with captured audio buffers.
@@ -18,11 +19,11 @@ final class SpeechPipeline: @unchecked Sendable {
     }
 
     enum Failure: LocalizedError {
-        case unsupported(String)
+        case unsupported(Language)
 
         var errorDescription: String? {
             switch self {
-            case .unsupported(let locale): "Máy không hỗ trợ nhận dạng giọng nói \(locale) on-device."
+            case .unsupported(let language): tr(.speechUnsupported, tr(language == .english ? .speechEnglish : .speechVietnamese))
             }
         }
     }
@@ -72,7 +73,7 @@ final class SpeechPipeline: @unchecked Sendable {
         case .english:
             let locale = Locale(identifier: "en_US")
             guard await SpeechTranscriber.supportedLocales.contains(where: { $0.identifier == locale.identifier }) else {
-                throw Failure.unsupported("tiếng Anh")
+                throw Failure.unsupported(.english)
             }
             let transcriber = SpeechTranscriber(locale: locale, transcriptionOptions: [],
                                                 reportingOptions: [.volatileResults], attributeOptions: [.transcriptionConfidence])
@@ -81,7 +82,7 @@ final class SpeechPipeline: @unchecked Sendable {
         case .vietnamese:
             let locale = Locale(identifier: "vi_VN")
             guard await DictationTranscriber.supportedLocales.contains(where: { $0.identifier == locale.identifier }) else {
-                throw Failure.unsupported("tiếng Việt")
+                throw Failure.unsupported(.vietnamese)
             }
             let transcriber = DictationTranscriber(locale: locale, contentHints: [], transcriptionOptions: [.punctuation],
                                                    reportingOptions: [.volatileResults], attributeOptions: [.transcriptionConfidence])
@@ -94,7 +95,7 @@ final class SpeechPipeline: @unchecked Sendable {
         }
         let analyzer = SpeechAnalyzer(modules: [module])
         guard let format = await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [module]) else {
-            throw Failure.unsupported(language == .english ? "tiếng Anh" : "tiếng Việt")
+            throw Failure.unsupported(language)
         }
         let (input, continuation) = AsyncStream<AnalyzerInput>.makeStream()
         try await analyzer.start(inputSequence: input)

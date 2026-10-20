@@ -88,7 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                       let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated,
                       LegacyInstances.Other(app).isLegacyBuild else { return }
                 delegate.log.error("Another copy runs next to this instance: pid \(pid, privacy: .public) (\(bundleID ?? "?", privacy: .public))")
-                delegate.overlay.showNotice("⚠️ Một bản TalkMargin khác đang chạy (pid \(pid)): hãy thoát một bản", seconds: 12)
+                delegate.overlay.showNotice(tr(.noticeOtherCopyRunning, pid), seconds: 12)
             }
         }
     }
@@ -107,7 +107,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Same rule as the open dialog and the recents: only what `NotesLoader` reads.
     private func openNotes(_ url: URL) {
         guard NotesLoader.isSupported(url) else {
-            overlay.showMarkdown("## Không hỗ trợ loại file\n\n`\(url.path)`\n\nMở được: \(Self.fileTypes).", title: "Không mở được")
+            overlay.showMarkdown("## \(tr(.pageUnsupportedType))\n\n`\(url.path)`\n\n\(tr(.pageSupportedTypes, Self.fileTypes))",
+                                 title: tr(.pageCannotOpenTitle))
             present()
             return
         }
@@ -137,11 +138,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         overlay.onOpenOtherFile = { [unowned self] in openFile() }
         overlay.onLinkSession = { [unowned self] in link($0) }
         overlay.onSessionPickerOpened = { [unowned self] in refreshClaudeSessions() }
+        // The chat's own texts (empty page, status) follow the language; its saved turns do not change.
+        overlay.onLanguageChange = { [unowned self] in chat.onChange?() }
         clip.onPreview = { [unowned self] in overlay.showRecording($0, placeholder: recordingPlaceholder) }
     }
 
     private var recordingPlaceholder: String {
-        clip.notice.map { "🎙 \($0)" } ?? "🎙 Đang nghe cuộc họp và micro… nhả ⌥ / để dừng"
+        clip.notice.map { "🎙 \($0)" } ?? tr(.recordingListening)
     }
 
     private func beginClip() {
@@ -151,7 +154,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func endClip() {
         Task {
-            overlay.showRecording("", placeholder: "Đang chuyển thành chữ…")
+            overlay.showRecording("", placeholder: tr(.recordingTranscribing))
             let text = await clip.end()
             overlay.finishRecording(text)
         }
@@ -176,11 +179,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// The chat refuses while answering; settings follow only when it accepted.
     private func link(_ session: ClaudeSession?) {
-        guard chat.link(to: session) else { return overlay.flashChatTitle(Self.busyNotice) }
+        guard chat.link(to: session) else { return overlay.flashChatTitle(tr(.noticeClaudeBusy)) }
         settings.linkedSession = session
     }
-
-    private static let busyNotice = "⏳ Claude đang trả lời, thử lại sau"
 
     func applicationWillTerminate(_ notification: Notification) {
         overlay.saveScrollPosition()
@@ -259,45 +260,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.removeAllItems()
 
         if !RightOptionKeys.shared.isActive {
-            menu.addItem(item("Cấp quyền Accessibility để bật phím tắt…", nil, #selector(openAccessibilitySettings)))
+            menu.addItem(item(tr(.menuGrantAccessibility), nil, #selector(openAccessibilitySettings)))
             menu.addItem(.separator())
         }
 
-        menu.addItem(item(overlay.isVisible ? "Ẩn overlay" : "Hiện overlay", "p", #selector(toggleOverlay)))
-        menu.addItem(item(overlay.isExpanded ? "Thu gọn" : "Mở rộng", "e", #selector(toggleExpanded)))
-        menu.addItem(item(overlay.isOutlineVisible ? "Ẩn mục lục" : "Hiện mục lục", "o", #selector(toggleOutline)))
-        menu.addItem(item(overlay.isChatVisible ? "Đóng khung Claude" : "Mở khung Claude", "a", #selector(toggleChat)))
+        menu.addItem(item(tr(overlay.isVisible ? .menuHideOverlay : .menuShowOverlay), "p", #selector(toggleOverlay)))
+        menu.addItem(item(tr(overlay.isExpanded ? .menuCompact : .menuExpand), "e", #selector(toggleExpanded)))
+        menu.addItem(item(tr(overlay.isOutlineVisible ? .menuHideOutline : .menuShowOutline), "o", #selector(toggleOutline)))
+        menu.addItem(item(tr(overlay.isChatVisible ? .menuCloseChat : .menuOpenChat), "a", #selector(toggleChat)))
         menu.addItem(.separator())
-        menu.addItem(item("Hỏi Claude…", "k", #selector(askQuestionAction)))
-        let talk = item("Giữ để nói câu hỏi", "/", #selector(askQuestionAction), enabled: false)
-        talk.toolTip = "Giữ ⌥ / bên phải: thu âm thanh cuộc họp và micro, nhả ra để xem lại rồi Enter"
+        menu.addItem(item(tr(.menuAskClaude), "k", #selector(askQuestionAction)))
+        let talk = item(tr(.menuHoldToTalk), "/", #selector(askQuestionAction), enabled: false)
+        talk.toolTip = tr(.menuHoldToTalkHint)
         menu.addItem(talk)
-        menu.addItem(item("Chọn session Claude…", "s", #selector(showSessionPicker)))
+        menu.addItem(item(tr(.menuChooseSession), "s", #selector(showSessionPicker)))
         menu.addItem(claudeSessionItem())
-        menu.addItem(item("Copy lệnh tiếp tục trong terminal", nil, #selector(continueInTerminal), enabled: chat.terminalSession != nil))
-        menu.addItem(item("Cuộc trò chuyện mới", nil, #selector(newConversation), enabled: chat.hasConversation))
+        menu.addItem(item(tr(.menuCopyResumeCommand), nil, #selector(continueInTerminal), enabled: chat.terminalSession != nil))
+        menu.addItem(item(tr(.menuNewConversation), nil, #selector(newConversation), enabled: chat.hasConversation))
         menu.addItem(pastConversationsItem())
         menu.addItem(.separator())
-        menu.addItem(item("Đổi tài liệu…", "d", #selector(showDocumentPicker)))
-        menu.addItem(item("Mở file…", nil, #selector(openFile)))
+        menu.addItem(item(tr(.menuSwitchDocument), "d", #selector(showDocumentPicker)))
+        menu.addItem(item(tr(.menuOpenFile), nil, #selector(openFile)))
         menu.addItem(recentFilesItem())
         let hasFile = overlay.fileURL != nil
-        menu.addItem(item("Sửa file trong editor", nil, #selector(editFile), enabled: hasFile))
-        menu.addItem(item("Tải lại", nil, #selector(reloadFile), enabled: hasFile))
+        menu.addItem(item(tr(.menuEditFile), nil, #selector(editFile), enabled: hasFile))
+        menu.addItem(item(tr(.menuReload), nil, #selector(reloadFile), enabled: hasFile))
         menu.addItem(.separator())
-        menu.addItem(item("Chữ to hơn", "=", #selector(biggerFont)))
-        menu.addItem(item("Chữ nhỏ hơn", "-", #selector(smallerFont)))
-        menu.addItem(item("Tuỳ chỉnh hiển thị…", nil, #selector(showDisplaySettings)))
-        let clickThrough = item("Click xuyên qua overlay", "t", #selector(toggleClickThrough))
+        menu.addItem(item(tr(.menuLargerText), "=", #selector(biggerFont)))
+        menu.addItem(item(tr(.menuSmallerText), "-", #selector(smallerFont)))
+        menu.addItem(item(tr(.menuDisplaySettings), nil, #selector(showDisplaySettings)))
+        let clickThrough = item(tr(.menuClickThrough), "t", #selector(toggleClickThrough))
         clickThrough.state = overlay.clickThrough ? .on : .off
         menu.addItem(clickThrough)
-        menu.addItem(item("Đưa về sát webcam", nil, #selector(moveToWebcam)))
+        menu.addItem(item(tr(.menuMoveToWebcam), nil, #selector(moveToWebcam)))
         menu.addItem(.separator())
-        let launchAtLogin = item("Mở cùng macOS", nil, #selector(toggleLaunchAtLogin))
+        let launchAtLogin = item(tr(.menuLaunchAtLogin), nil, #selector(toggleLaunchAtLogin))
         launchAtLogin.state = SMAppService.mainApp.status == .enabled ? .on : .off
         menu.addItem(launchAtLogin)
-        menu.addItem(item("Phím tắt & hướng dẫn", nil, #selector(showHelp)))
-        menu.addItem(item("Thoát", nil, #selector(quit)))
+        menu.addItem(item(tr(.menuHelp), nil, #selector(showHelp)))
+        menu.addItem(item(tr(.menuQuit), nil, #selector(quit)))
     }
 
     /// `shortcut` mirrors a global right-⌥ shortcut so the menu shows it natively.
@@ -313,23 +314,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func claudeSessionItem() -> NSMenuItem {
-        let title = chat.link.map { "Session Claude: \(($0.cwd as NSString).lastPathComponent) · \($0.title)" }
-            ?? "Session Claude: chưa liên kết"
+        let title = chat.link.map { tr(.menuSessionLinked, ($0.cwd as NSString).lastPathComponent, $0.displayTitle) }
+            ?? tr(.menuSessionNotLinked)
         let parent = NSMenuItem(title: title.count > 60 ? String(title.prefix(60)) + "…" : title, action: nil, keyEquivalent: "")
         let submenu = NSMenu()
-        let none = item("Không liên kết", nil, #selector(linkSession(_:)))
+        let none = item(tr(.menuNotLinked), nil, #selector(linkSession(_:)))
         none.state = chat.link == nil ? .on : .off
         submenu.addItem(none)
         submenu.addItem(.separator())
         if claudeProjects.isEmpty {
-            submenu.addItem(NSMenuItem(title: "Không tìm thấy session nào trong ~/.claude/projects", action: nil, keyEquivalent: ""))
+            submenu.addItem(NSMenuItem(title: tr(.menuNoSessions), action: nil, keyEquivalent: ""))
         }
         for project in claudeProjects {
             let projectItem = NSMenuItem(title: project.name, action: nil, keyEquivalent: "")
             projectItem.toolTip = project.cwd
             let sessions = NSMenu()
             for session in project.sessions {
-                let entry = item("\(session.title)  ·  \(session.modified.formatted(.relative(presentation: .named)))",
+                let modified = session.modified.formatted(.relative(presentation: .named).locale(UIText.language.locale))
+                let entry = item("\(session.displayTitle)  ·  \(modified)",
                                  nil, #selector(linkSession(_:)))
                 entry.representedObject = session.id
                 entry.toolTip = session.id
@@ -345,13 +347,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func pastConversationsItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: "Cuộc trò chuyện trước", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: tr(.menuPastConversations), action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         let saved = chat.savedConversations.prefix(15)
         for conversation in saved {
             var summary = conversation.summary.replacingOccurrences(of: "\n", with: " ")
             if summary.count > 50 { summary = String(summary.prefix(50)) + "…" }
-            let date = conversation.updated.formatted(.dateTime.day().month(.abbreviated).hour().minute())
+            let date = conversation.updated.formatted(.dateTime.day().month(.abbreviated).hour().minute().locale(UIText.language.locale))
             let project = conversation.link.map { " · \(($0.cwd as NSString).lastPathComponent)" } ?? ""
             let entry = item("\(summary)  ·  \(date)\(project)", nil, #selector(openConversation(_:)))
             entry.representedObject = conversation.id.uuidString
@@ -360,14 +362,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             submenu.addItem(entry)
         }
         if saved.isEmpty {
-            submenu.addItem(NSMenuItem(title: "Chưa có cuộc trò chuyện nào", action: nil, keyEquivalent: ""))
+            submenu.addItem(NSMenuItem(title: tr(.menuNoConversations), action: nil, keyEquivalent: ""))
         }
         parent.submenu = submenu
         return parent
     }
 
     private func recentFilesItem() -> NSMenuItem {
-        let parent = NSMenuItem(title: "Mở gần đây", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: tr(.menuOpenRecent), action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         let recents = settings.openableRecentFiles
         for path in recents {
@@ -379,10 +381,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             submenu.addItem(entry)
         }
         if recents.isEmpty {
-            submenu.addItem(NSMenuItem(title: "Chưa có file nào", action: nil, keyEquivalent: ""))
+            submenu.addItem(NSMenuItem(title: tr(.menuNoRecentFiles), action: nil, keyEquivalent: ""))
         } else {
             submenu.addItem(.separator())
-            submenu.addItem(item("Xoá danh sách", nil, #selector(clearRecents)))
+            submenu.addItem(item(tr(.menuClearRecents), nil, #selector(clearRecents)))
         }
         parent.submenu = submenu
         return parent
@@ -395,7 +397,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func toggleOutline() { overlay.toggleOutline(); overlay.show() }
     @objc private func askQuestionAction() { askQuestion() }
     @objc private func newConversation() {
-        if !chat.reset() { overlay.flashChatTitle(Self.busyNotice) }
+        if !chat.reset() { overlay.flashChatTitle(tr(.noticeClaudeBusy)) }
     }
 
     @objc private func openConversation(_ sender: NSMenuItem) {
@@ -427,7 +429,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 try SMAppService.mainApp.register()
             }
         } catch {
-            overlay.showMarkdown("## ⚠️ Không đổi được \"Mở cùng macOS\"\n\n\(error.localizedDescription)", title: "Lỗi")
+            let detail = error.localizedDescription
+            overlay.showMarkdown("## \(tr(.pageLaunchAtLoginFailed, tr(.menuLaunchAtLogin)))\n\n\(detail)", title: tr(.pageErrorTitle))
             overlay.show()
         }
     }
@@ -463,51 +466,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func showHelp() {
-        let notice = RightOptionKeys.shared.isActive ? "" : Self.permissionNotice
-        overlay.showMarkdown(notice + Self.helpText, title: "Hướng dẫn")
+        overlay.showMarkdown((RightOptionKeys.shared.isActive ? "" : tr(.pagePermissionNotice)) + tr(.pageHelp, Self.fileTypes),
+                             title: tr(.pageHelpTitle))
         present()
     }
 
     private static var fileTypes: String {
         NotesLoader.supportedExtensions.map { "`.\($0)`" }.joined(separator: ", ")
     }
-
-    private static let helpText = """
-    # TalkMargin
-
-    Bấm **tên file trên header** (hoặc `⌥D`) để đổi tài liệu (\(AppDelegate.fileTypes)): file mở gần đây, hoặc **Duyệt thư mục…** để mở file khác ngay trong overlay, kể cả khi đang share màn hình. **Hộp thoại mở file…** của macOS chỉ dùng khi không share: menu trong hộp thoại đó hiện lên với người xem. Khi bạn sửa và lưu file trong editor hoặc Word, overlay tự cập nhật.
-
-    ## Phím tắt (giữ ⌥ bên phải)
-    - `⌥P` ẩn / hiện overlay
-    - `⌥↓` / `⌥↑` cuộn xuống / lên, giữ phím để cuộn liên tục
-    - `⌥]` / `⌥[` nhảy tới heading sau / trước
-    - `⌥1` … `⌥9` nhảy tới phần thứ N
-    - `⌥O` hoặc nút `☰` hiện / ẩn mục lục, click heading để nhảy tới
-    - `⌥←` quay lại chỗ đang đọc dở trước khi nhảy (nút `↩` trên header), `⌥→` đi tới lại
-    - `⌥E` mở rộng / thu gọn overlay
-    - `⌥=` / `⌥-` chữ to / nhỏ hơn
-    - `⌥T` bật / tắt click xuyên qua overlay
-    - `⌥D` đổi tài liệu, `⌥S` chọn session Claude. Trong danh sách: `⌥↓` `⌥↑` chọn, `⌥↩` mở, `⌥1`…`⌥9` mở nhanh dòng thứ N
-
-    ⌥ bên trái vẫn hoạt động bình thường trong các app khác.
-
-    ## Hỏi Claude
-    - `⌥A` hoặc nút `>>` mở / đóng khung Claude bên phải (kéo thanh chia để đổi tỉ lệ)
-    - Giữ `⌥ /` để thu âm thanh cuộc họp và micro, nhả ra để xem lại chữ rồi Enter. Giữ thêm lần nữa để nối tiếp.
-    - `⌥K` gõ câu hỏi cho Claude, Enter gửi, Shift+Enter xuống dòng
-
-    Bấm **tiêu đề khung Claude** (hoặc `⌥S`) để chọn session Claude Code, để Claude hiểu project.
-
-    ## Mẹo
-    - Kéo thanh trên cùng để di chuyển, kéo mép để đổi kích thước. Chế độ thu gọn và mở rộng nhớ kích thước riêng.
-    - Double-click thanh trên cùng hoặc bấm nút góc trái cũng để mở rộng / thu gọn.
-    - Overlay không hiện khi bạn share màn hình, và không lấy focus của app họp.
-    - Dùng heading `##` cho từng phần để nhảy nhanh bằng `⌥]`.
-    """
-
-    private static let permissionNotice = """
-    ## ⚠️ Phím tắt chưa hoạt động
-    Vào **System Settings → Privacy & Security → Accessibility** và bật **TalkMargin**. Phím tắt sẽ tự bật ngay sau đó.
-
-    """
 }

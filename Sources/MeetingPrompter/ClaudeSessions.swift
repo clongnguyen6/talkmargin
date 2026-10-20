@@ -1,4 +1,5 @@
 import Foundation
+import PrompterCore
 
 struct ClaudeSession: Equatable, Sendable, Codable {
     let id: String
@@ -10,7 +11,12 @@ struct ClaudeSession: Equatable, Sendable, Codable {
 
 extension ClaudeSession {
     /// Name prefix of the read-only forks the chat creates, as `claude --resume` lists them.
-    static let meetingForkPrefix = "🎙 Meeting · "
+    static let meetingForkPrefix = ClaudeText.meetingForkPrefix
+
+    /// The title as the interface shows it: the catalog's fallback title in the interface language.
+    var displayTitle: String {
+        title == ClaudeText.untitledSession ? tr(.sessionUntitled) : title
+    }
 
     /// A fork this app made for a meeting conversation: by its name, or by a fork id
     /// a saved conversation recorded (in case the name was changed).
@@ -94,7 +100,7 @@ enum ClaudeSessionCatalog {
         guard let cwd = headLines.lazy.compactMap({ $0["cwd"] as? String }).first else { return nil }
         let title = (jsonLines(tail) + headLines).reversed().lazy.compactMap(Self.title(from:)).first
             ?? headLines.lazy.compactMap(Self.firstPrompt(from:)).first
-            ?? "Session không tên"
+            ?? ClaudeText.untitledSession
         return ClaudeSession(id: url.deletingPathExtension().lastPathComponent, cwd: cwd, title: title, modified: modified)
     }
 
